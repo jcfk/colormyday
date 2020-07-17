@@ -1,2 +1,2 @@
 # colormyday
-Curses-based Daily Activity Visualizer
+Curses-based daily behavior visualizer

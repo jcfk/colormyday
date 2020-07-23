@@ -1,12 +1,13 @@
 #include "colormyday.h"
 
-void save_default_colors(short color10[], short color11[]) {
+short color10[3], color11[3];
+
+void save_default_colors() {
 	color_content(10, &color10[0], &color10[1], &color10[2]);
 	color_content(11, &color11[0], &color11[1], &color11[2]);
-
 }
 
-void curses_init(short color10[], short color11[]) {
+void curses_init() {
 	initscr();
 	cbreak();
 	noecho();
@@ -35,7 +36,7 @@ void curses_init(short color10[], short color11[]) {
 	init_pair(2, 11, 10);
 }
 
-void exit_colormyday(short color10[], short color11[]) {
+void exit_colormyday() {
 	init_color(10, color10[0], color10[1], color10[2]);
 	init_color(11, color11[0], color11[1], color11[2]);
 	endwin();
@@ -55,7 +56,6 @@ int main(int argc, char* argv[]) {
 	io_init();
 
 	/* configure window */
-	short color10[3], color11[3];
 	curses_init(color10, color11);
 	int rainbow_h = windows_init();
 
@@ -76,37 +76,11 @@ int main(int argc, char* argv[]) {
 	pthread_create(&tick_thread, NULL, tick_init, NULL);
 
 	/* keyboard input */
-	
 	int key;
 	for(;;) {
 		key = wgetch(rainbow);
 
-		switch(key) {
-			case KEY_UP:
-				key_up_handler();
-				break;
-			case KEY_DOWN:
-				exit_colormyday(color10, color11);
-			case KEY_RESIZE:
-				resize_colormyday();
-				break;
-		}
-
-		switch((char)key) {
-			case 'h':
-				move_left();
-				break;
-			case 'j':
-				move_down();
-				break;
-			case 'k':
-				move_up();
-				break;
-			case 'l':
-				move_right();
-				break;
-		}
-
+		input_handle(key);
 	}
 
 	endwin();

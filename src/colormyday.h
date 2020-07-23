@@ -11,6 +11,7 @@
 #include <string.h>
 #include <locale.h>
 #include <wchar.h>
+#include <limits.h>
 
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -66,7 +67,8 @@ enum cursor_movement {
 	LEFT,
 	DOWN,
 	UP,
-	RIGHT
+	RIGHT,
+	BOTTOM
 };
 
 /* globals */
@@ -78,22 +80,25 @@ extern struct display_event current_event;
 extern struct display_event cursor_event;
 extern bool cursor_ticking;
 
+/* colormyday.c */
+void exit_colormyday();
+void resize_colormyday();
+
 /* tick.c */
 void* tick_init(void* arg);
 
 /* input.c */
-void key_up_handler();
-void move_right();
-void move_up();
-void move_down();
-void move_left();
+void input_handle(int key);
 
 /* data.c */
+void reload_current_events();
 struct display_event time_to_event(int time);
 void make_current_event(struct event event);
 void data_init(int rainbow_h);
 int make_color(char* code);
 void make_group_color_dict();
+void begin_event(char* name);
+struct display_event end_current_event();
 
 /* display.c */
 extern WINDOW* top_data;
@@ -101,6 +106,7 @@ extern WINDOW* rainbow;
 extern WINDOW* bottom_data;
 extern WINDOW* controls;
 
+void display_events();
 void cursor_move(enum cursor_movement movement);
 void display_tick();
 char* get_command();
@@ -114,11 +120,11 @@ void display_init();
 void display_note(struct display_event display_event);
 
 /* io.c */
+char* cursor_event_path();
 void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, struct charpcharp_llist** group_hex_dict);
 void make_dicts();
 void io_init();
-void begin_event(char* name);
-struct display_event end_current_event();
+void event_to_file(struct event event);
 struct event file_to_event(char* file);
 struct charp_llist* get_events_between(int earlier_bound, int later_bound);
 struct charint_llist* get_color_dict();

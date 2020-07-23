@@ -53,6 +53,10 @@ void cursor_move(enum cursor_movement movement) {
 		case RIGHT:
 			new_x = new_x + 1;
 			break;
+		case BOTTOM:
+			new_y = time_cursor[0];
+			new_x = time_cursor[1];
+			break;
 
 	}
 	
@@ -61,19 +65,25 @@ void cursor_move(enum cursor_movement movement) {
 
 	cursor[0] = new_y;
 	cursor[1] = new_x;
-	
+
 	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
 	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
+	
+	if (cursor[0] == time_cursor[0] && cursor[1] == time_cursor[1]) {	
+		cursor_ticking = true;
+	} else {
+		cursor_ticking = false;
+	}
 
-	cursor_ticking = false;
 	disp_event(cursor_event);
 
 	int new_time = earlier_bound_day + new_y * 86400 + new_x * slot_duration + (slot_duration / 2);
-	cursor_event = time_to_event(new_time);
+	cursor_event = time_to_event(new_time);	
 
-	disp_event(cursor_event); 
+	disp_event(cursor_event);
+
 	display_note(cursor_event);
-
+	
 }
 
 /*
@@ -164,9 +174,23 @@ void display_note(struct display_event display_event) {
 	char* note = display_event.event.note;
 	char* group = display_event.group;
 	int color = display_event.color;
+	
+	struct tm teeem_s = *time_to_tm_local(start_time);
+	char start_time_english[50];
+	strftime(start_time_english, sizeof(start_time_english), "%a, %H:%M:%S", &teeem_s);
 
 	char* title = NULL;
-	asprintf(&title, "C: %s (group: %s) | Start: %d -> End: %d", name, group, start_time, end_time);
+	if (end_time == -1) {
+		asprintf(&title, "C: %s (group: %s) | %s -> NOW", name, group, start_time_english);
+
+	} else {
+		struct tm teeem_e = *time_to_tm_local(end_time);
+		char end_time_english[50];
+		strftime(end_time_english, sizeof(end_time_english), "%a, %H:%M:%S", &teeem_e);
+		
+		asprintf(&title, "C: %s (group: %s) | %s -> %s", name, group, start_time_english, end_time_english);
+
+	}
 
 	werase(bottom_data);
 	box(bottom_data, 0, 0);
@@ -184,6 +208,32 @@ void display_note(struct display_event display_event) {
 /*
  * EVENT DISPLAYERS
  */
+int left_x_bound(int diff) {
+	float a, b, ret;
+	a = diff % 86400;
+	b = slot_duration;
+	ret = a / b;
+
+	if (round(ret) < ret) {
+		return floor(ret);
+	} else {
+		return floor(ret) + 1;
+	}
+}
+
+int right_x_bound(int diff) {
+	float a, b, ret;
+	a = diff % 86400;
+	b = slot_duration;
+	ret = a / b;
+
+	if (round(ret) < ret) {
+		return floor(ret) - 1;
+	} else {
+		return floor(ret);
+	}
+}
+
 void display_duration(struct display_event display_event) {
 	char* temp;
 	char* name = display_event.event.name;
@@ -215,23 +265,18 @@ void disp_event(struct display_event display_event) {
 	end_time = display_event.event.end_time;
 	name = display_event.event.name;
 
+	if (end_time == -1) {
+		end_time = current_time;
+	}
+
 	start_y = 0;
 	start_x = 0;
 
 	if (earlier_bound_day < start_time) {
 		diff = start_time - earlier_bound_day;
-		start_y = start_y + floor(diff/86400);
-
-		float a, b, temp_x;
-		a = diff % 86400;
-		b = slot_duration;
-		temp_x = a / b;
-
-		if (round(temp_x) < temp_x) {
-			start_x = start_x + floor(temp_x);
-		} else {
-			start_x = start_x + floor(temp_x) + 1;
-		}
+		start_y = floor(diff/86400);
+		start_x = left_x_bound(diff);
+	
 	}
 
 	end_y = 0;
@@ -239,17 +284,7 @@ void disp_event(struct display_event display_event) {
 
 	diff = end_time - earlier_bound_day;
 	end_y = end_y + floor(diff/86400);
-
-	float a, b, temp_x;
-	a = diff % 86400;
-	b = slot_duration;
-	temp_x = a / b;
-
-	if (round(temp_x) < temp_x) {
-		end_x = end_x + floor(temp_x) - 1;
-	} else {
-		end_x = end_x + floor(temp_x);
-	}
+	end_x = right_x_bound(diff);
 
 	/* Actually display event */
 	int len = strlen(name);
@@ -267,11 +302,13 @@ void disp_event(struct display_event display_event) {
 	while (start_x + color_width*start_y <= end_x + color_width*end_y) {
 		if (start_y == cursor[0] && start_x == cursor[1]) {
 			wattron(rainbow, A_BOLD);
-			mvwprintw(rainbow, start_y+3, start_x+8, "C");
-		
+			mvwprintw(rainbow, start_y+3, start_x+8, "\u2588");
+
 			if (i > len) {
 				wattroff(rainbow, A_BOLD);
 			}
+
+			cursor_event = display_event;
 
 		} else if (start_y == end_y && start_x == end_x) {
 			mvwprintw(rainbow, start_y+3, start_x+8, "\u2591");
@@ -305,25 +342,13 @@ void disp_event(struct display_event display_event) {
 	wrefresh(rainbow);
 }
 
-void display_end_event(struct display_event display_event) {	
-	struct display_event temp = display_event;
-	temp.event.end_time = current_time + slot_duration;
-	
-	disp_event(temp);
-}
-
 void display_events() {
 	struct display_eventp_llist* temp = current_events;
 
 	struct display_event temp_display_event;
 	while (temp) {
 		temp_display_event = temp->display_event;
-
-		if (temp_display_event.event.end_time == -1) {
-			display_end_event(temp_display_event);
-		} else {
-			disp_event(temp_display_event);
-		}
+		disp_event(temp_display_event);
 
 		temp = temp->next;
 	}
@@ -335,9 +360,14 @@ void display_events() {
 void display_tick() {
 	int diff = current_time - earlier_bound_day;
 
+	if (current_event.event.name != NULL) {
+		display_duration(current_event);
+		disp_event(current_event);
+	}
+
 	time_cursor[0] = floor(diff/86400);
-	time_cursor[1] = floor((diff % 86400)/slot_duration);
-	
+	time_cursor[1] = right_x_bound(diff);
+
 	if (cursor_ticking) {
 		cursor_tick();
 	} 
@@ -375,26 +405,8 @@ void rainbow_init() {
 void cursor_init() {
 	cursor_ticking = true;
 
-	int diff = current_time - earlier_bound_day;
+	display_tick();
 
-	time_cursor[0] = round(diff/86400);
-	time_cursor[1] = round((diff % 86400)/slot_duration);
-	cursor[0] = time_cursor[0];
-	cursor[1] = time_cursor[1];
-
-	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
-	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
-
-	/* 
-	int c = current_event.color;
-
-	wattron(rainbow, COLOR_PAIR(c));
-	wattron(rainbow, A_BOLD);
-	mvwprintw(rainbow, y + 3, x + 8, "C");
-	wattroff(rainbow, COLOR_PAIR(c));
-	wattroff(rainbow, A_BOLD);
-	*/
-	wrefresh(rainbow);
 }
 
 void display_init() {
@@ -408,7 +420,9 @@ void display_init() {
 
 	if (current_event.event.name != NULL) {
 		display_duration(current_event);
-		cursor_event = current_event;
+	}
+	
+	if (cursor_event.event.name != NULL) {
 		display_note(cursor_event);
 	}
 

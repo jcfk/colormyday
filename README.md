@@ -1,3 +1,5 @@
-# colormyday
 
-Colorful terminal-based daily activity visualizer
+
+Super colorful terminal-based daily life activity visualizer!!!
+
+

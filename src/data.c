@@ -9,34 +9,9 @@ struct charpcharp_llist* member_group_dict = NULL;
 struct charpcharp_llist* group_hex_dict = NULL;
 struct charpint_llist* group_color_dict = NULL;
 
-struct display_event time_to_event(int time) {
-	struct display_eventp_llist* temp = current_events;
-
-	int start_time, end_time;
-	while (temp) {
-		start_time = temp->display_event.event.start_time;
-		end_time = temp->display_event.event.end_time;
-
-		if (start_time < time && time < end_time) {
-			return temp->display_event;
-		}
-
-		temp = temp->next;
-	}
-
-	struct display_event ret;
-
-	ret.event.start_time = -1;
-	ret.event.end_time = -1;
-	ret.event.name = "0";
-	ret.event.note = "0";
-	ret.group = "0";
-	ret.color = -1;
-	
-	return ret;
-
-}
-
+/*
+ * COLOR DATA
+ */
 int make_color(char* code) {
 	static int no_of_colors = 50;
 
@@ -70,8 +45,6 @@ int make_color(char* code) {
 	g = round(((int)strtol(greenhex, NULL, 0)/(float) 255)*1000);
 	b = round(((int)strtol(bluehex, NULL, 0)/(float) 255)*1000);
 
-	/* printf("N:%d R:%d G:%d B:%d\n", no_of_colors, r, g, b); */
-
 	init_color(no_of_colors, r, g, b);
 	float luma = 0.2126*(r/(float) 1000) + 0.7152*(g/(float) 1000) + 0.0722*(b/(float) 1000);
 	if (luma > 0.4) {
@@ -96,6 +69,71 @@ void make_group_color_dict(struct charpint_llist** list) {
 
 }
 
+/*
+ * EVENT DATA
+ */
+struct display_event time_to_event(int time) {
+	struct display_eventp_llist* temp = current_events;
+
+	int start_time, end_time;
+	while (temp) {
+		start_time = temp->display_event.event.start_time;
+		end_time = temp->display_event.event.end_time;
+
+		if (start_time < time && (time < end_time || (end_time == -1 && time < current_time))) {
+			return temp->display_event;
+		}
+
+		temp = temp->next;
+	}
+
+	struct display_event ret;
+
+	ret.event.start_time = 0;
+	ret.event.end_time = 0;
+	ret.event.name = "-";
+	ret.event.note = "-";
+	ret.group = "-";
+	ret.color = -1;
+	
+	return ret;
+
+}
+
+void begin_event(char* name) {
+	struct event temp;
+	temp.name = name;
+	temp.note = "-1";
+	temp.start_time = current_time;
+	temp.end_time = -1;
+	
+	event_to_file(temp);
+	
+	make_current_event(temp);
+
+	if (cursor_ticking) {
+		cursor_event = current_event;
+
+	}
+
+	push_display_eventp_llist(current_event, &current_events);
+
+}
+
+struct display_event end_current_event() {
+	current_events->display_event.event.end_time = current_time;
+
+	struct display_event temp = current_event;
+	temp.event.end_time = current_time;
+	current_event.event.name = NULL;
+	
+	event_to_file(temp.event);
+
+	return temp;
+	
+}
+
+/* Lists events from youngest (current_event) to oldest */
 void make_current_events(struct charp_llist* list,
 	struct charpcharp_llist* member_group_dict,
 	struct charpint_llist* group_color_dict) 
@@ -147,6 +185,13 @@ void make_current_event(struct event event) {
 	current_event = temp_de;
 }
 
+void reload_current_events() {
+	make_current_events(get_events_between(earlier_bound_day, later_bound_day), member_group_dict, group_color_dict);
+}
+
+/*
+ * INITALIZER
+ */
 void data_init(int rainbow_h) {
 	current_time = time(NULL);
 
@@ -167,6 +212,5 @@ void data_init(int rainbow_h) {
 	make_group_color_dict(&group_color_dict);
 
 	/* Load event globals */
-	make_current_events(get_events_between(earlier_bound_day, later_bound_day), member_group_dict, group_color_dict);
-
+	reload_current_events();
 }

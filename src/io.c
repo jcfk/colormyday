@@ -91,7 +91,7 @@ struct charp_llist* get_events_between(int earlier_bound, int later_bound) {
 	return ret;
 }
 
-void event_to_file(char* name, struct event event) {
+void event_to_file(struct event event) {
 	xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
 	xmlNodePtr root = xmlNewNode(NULL, BAD_CAST "event");
 
@@ -110,6 +110,10 @@ void event_to_file(char* name, struct event event) {
 
 	char* new_file;
 	asprintf(&new_file, "%s/%d", cmddb_path, event.start_time);
+	if (event.end_time != -1) {
+		remove(new_file);
+		asprintf(&new_file, "%s/%d-%d", cmddb_path, event.start_time, event.end_time);
+	}
 
 	xmlSaveFileEnc(new_file, doc, "UTF-8");
 
@@ -139,35 +143,16 @@ struct event file_to_event(char* file) {
 	return e;
 }
 
-void begin_event(char* name) {
-	struct event temp;
-	temp.name = name;
-	temp.note = "none";
-	temp.start_time = current_time;
-	temp.end_time = -1;
-
-	char* new_file;
-	asprintf(&new_file, "%s/%d", cmddb_path, current_time);
-
-	event_to_file(new_file, temp);
-	current_event_path = new_file;
-
-	make_current_event(temp);
-}
-
-struct display_event end_current_event() {
-	struct display_event temp = current_event;
-	temp.event.end_time = current_time;
-	current_event.event.name = NULL;
-
-	event_to_file(current_event_path, temp.event);
+char* cursor_event_path() {
+	char* ret = NULL;
 	
-	char* new_file;
-	asprintf(&new_file, "%s-%d", current_event_path, current_time);
+	if (cursor_event.event.end_time == -1) {
+		asprintf(&ret, "%s/%d", cmddb_path, cursor_event.event.start_time);
+	} else {
+		asprintf(&ret, "%s/%d-%d", cmddb_path, cursor_event.event.start_time, cursor_event.event.end_time);
+	}
 
-	rename(current_event_path, new_file);
-
-	return temp;
+	return ret;
 }
 
 /*

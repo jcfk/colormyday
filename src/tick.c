@@ -9,11 +9,6 @@ void tick() {
 
 		current_time = time(NULL);
 
-		if (current_event.event.name != NULL) {
-			display_duration(current_event);
-			display_end_event(current_event);
-		}
-
 		display_tick();
 
 		pthread_mutex_unlock(&display_access);

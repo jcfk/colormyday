@@ -3,16 +3,17 @@
 char* cmd_path = NULL;
 char* cmddb_path = NULL;
 char* cmdgroups_path = NULL;
+char* current_event_path;
 
-void make_member_group_hex_dicts() {
+void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, struct charpcharp_llist** group_hex_dict) {
 	xmlDocPtr doc;
 	xmlNodePtr node;
 
 	doc = xmlParseFile(cmdgroups_path);
 	node = xmlDocGetRootElement(doc);
 
-	member_group_dict = NULL;
-	group_hex_dict = NULL;
+	*member_group_dict = NULL;
+	*group_hex_dict = NULL;
 
 	int i = 50;
 	char *name, *hex, *member;
@@ -21,16 +22,18 @@ void make_member_group_hex_dicts() {
 	while(group && i < 256) {
 		sub_group = group->xmlChildrenNode;
 		name = (char*) xmlNodeListGetString(doc, sub_group->xmlChildrenNode, 1);
+		
 		sub_group = sub_group->next;
 		hex = (char*) xmlNodeListGetString(doc, sub_group->xmlChildrenNode, 1);
+		
 		sub_group = sub_group->next->xmlChildrenNode;
 
-		push_charpcharp_llist(name, hex, &group_hex_dict);
+		push_charpcharp_llist(name, hex, group_hex_dict);
 
 		while (sub_group) {
 			member = (char*) xmlNodeListGetString(doc, sub_group->xmlChildrenNode, 1);
 
-			push_charpcharp_llist(member, name, &member_group_dict);
+			push_charpcharp_llist(member, name, member_group_dict);
 			
 			sub_group = sub_group->next;
 		}
@@ -103,7 +106,7 @@ void event_to_file(char* name, struct event event) {
 	xmlNewChild(root, NULL, BAD_CAST "start", BAD_CAST start_time);
 	xmlNewChild(root, NULL, BAD_CAST "end", BAD_CAST end_time);
 	xmlNewChild(root, NULL, BAD_CAST "title", BAD_CAST event.name);
-	xmlNewChild(root, NULL, BAD_CAST "note", BAD_CAST "-1");
+	xmlNewChild(root, NULL, BAD_CAST "note", BAD_CAST event.note);
 
 	char* new_file;
 	asprintf(&new_file, "%s/%d", cmddb_path, event.start_time);
@@ -139,6 +142,7 @@ struct event file_to_event(char* file) {
 void begin_event(char* name) {
 	struct event temp;
 	temp.name = name;
+	temp.note = "none";
 	temp.start_time = current_time;
 	temp.end_time = -1;
 
@@ -146,18 +150,17 @@ void begin_event(char* name) {
 	asprintf(&new_file, "%s/%d", cmddb_path, current_time);
 
 	event_to_file(new_file, temp);
-
-	current_event = temp;
 	current_event_path = new_file;
-	
+
+	make_current_event(temp);
 }
 
-struct event end_current_event() {
-	struct event temp = current_event;
-	temp.end_time = current_time;
-	current_event.name = NULL;
+struct display_event end_current_event() {
+	struct display_event temp = current_event;
+	temp.event.end_time = current_time;
+	current_event.event.name = NULL;
 
-	event_to_file(current_event_path, temp);
+	event_to_file(current_event_path, temp.event);
 	
 	char* new_file;
 	asprintf(&new_file, "%s-%d", current_event_path, current_time);

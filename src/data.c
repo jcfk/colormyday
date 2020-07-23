@@ -1,7 +1,39 @@
 #include "colormyday.h"
 
-struct event time_to_event(int time) {
+int current_time;
+int earlier_bound_day, later_bound_day;
+struct display_eventp_llist* current_events;
+struct display_event current_event;
 
+struct charpcharp_llist* member_group_dict = NULL;
+struct charpcharp_llist* group_hex_dict = NULL;
+struct charpint_llist* group_color_dict = NULL;
+
+struct display_event time_to_event(int time) {
+	struct display_eventp_llist* temp = current_events;
+
+	int start_time, end_time;
+	while (temp) {
+		start_time = temp->display_event.event.start_time;
+		end_time = temp->display_event.event.end_time;
+
+		if (start_time < time && time < end_time) {
+			return temp->display_event;
+		}
+
+		temp = temp->next;
+	}
+
+	struct display_event ret;
+
+	ret.event.start_time = -1;
+	ret.event.end_time = -1;
+	ret.event.name = "0";
+	ret.event.note = "0";
+	ret.group = "0";
+	ret.color = -1;
+	
+	return ret;
 
 }
 
@@ -51,37 +83,71 @@ int make_color(char* code) {
 	return no_of_colors;
 }
 
-void make_group_color_dict() {
+void make_group_color_dict(struct charpint_llist** list) {
 	struct charpcharp_llist* temp = group_hex_dict;
-	group_color_dict = NULL;
+	*list = NULL;
 
 	while (temp) {
 		push_charpint_llist(temp->content_1,
 			make_color(temp->content_2),
-			&group_color_dict);
+			list);
 		temp = temp->next;
 	}
+
 }
 
-void make_current_events(struct charp_llist* list) {
+void make_current_events(struct charp_llist* list,
+	struct charpcharp_llist* member_group_dict,
+	struct charpint_llist* group_color_dict) 
+	{
+
 	struct charp_llist* temp = list;
 	current_events = NULL;
 
 	struct event temp_event;
+	struct display_event temp_display_event;
+
 	while(temp) {
 		temp_event = file_to_event(temp->content);
+		temp_display_event.event = temp_event;
+		
+		int c = 1;
+		char* group = NULL;
+		group = charpcharp_dict(member_group_dict, temp_event.name);
+		if (group) {
+			c = charpint_dict(group_color_dict, group);
+		}
+
+		temp_display_event.group = group;
+		temp_display_event.color = c;
 
 		if (temp_event.end_time == -1) {
-			current_event = temp_event;
+			current_event = temp_display_event;
 		}
 		
-		push_eventp_llist(temp_event, &current_events);
+		push_display_eventp_llist(temp_display_event, &current_events);
 		temp = temp->next;
 	}
-
 }
 
-void data_init() {
+void make_current_event(struct event event) {
+	struct display_event temp_de;
+	
+	int c = 1;
+	char* group = NULL;
+	group = charpcharp_dict(member_group_dict, event.name);
+	if (group) {
+		c = charpint_dict(group_color_dict, group);
+	}
+
+	temp_de.event = event;
+	temp_de.group = group;
+	temp_de.color = c;
+
+	current_event = temp_de;
+}
+
+void data_init(int rainbow_h) {
 	current_time = time(NULL);
 
 	/* Initialize rainbow to display to today from (rainbow_h - 3)/2 days ago */
@@ -97,11 +163,10 @@ void data_init() {
 	later_bound_day = end_of_day(&later_tm);
 
 	/* Load color globals */
-	make_member_group_hex_dicts();
-	make_group_color_dict();
+	make_member_group_hex_dicts(&member_group_dict, &group_hex_dict);
+	make_group_color_dict(&group_color_dict);
 
 	/* Load event globals */
-	make_current_events(get_events_between(earlier_bound_day, later_bound_day));
+	make_current_events(get_events_between(earlier_bound_day, later_bound_day), member_group_dict, group_color_dict);
 
 }
-

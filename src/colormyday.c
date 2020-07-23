@@ -1,22 +1,12 @@
 #include "colormyday.h"
 
-short color0[3];
-short color1[3];
-short color2[3];
-short color3[3];
-short color10[3];
-short color11[3];
-
-void save_default_colors() {
-	color_content(0, &color0[0], &color0[1], &color0[2]);
-	color_content(1, &color1[0], &color1[1], &color1[2]);
-	color_content(2, &color2[0], &color2[1], &color2[2]);
-	color_content(3, &color3[0], &color3[1], &color3[2]);
+void save_default_colors(short color10[], short color11[]) {
 	color_content(10, &color10[0], &color10[1], &color10[2]);
 	color_content(11, &color11[0], &color11[1], &color11[2]);
+
 }
 
-void curses_init() {
+void curses_init(short color10[], short color11[]) {
 	initscr();
 	cbreak();
 	noecho();
@@ -29,7 +19,7 @@ void curses_init() {
 		exit(1);
 	}
 	start_color();
-	save_default_colors();
+	save_default_colors(color10, color11);
 	use_default_colors();
 
 	/* new black */
@@ -45,11 +35,7 @@ void curses_init() {
 	init_pair(2, 11, 10);
 }
 
-void exit_colormyday() {
-	init_color(0, color0[0], color0[1], color0[2]);
-	init_color(1, color1[0], color1[1], color1[2]);
-	init_color(2, color2[0], color2[1], color2[2]);
-	init_color(3, color3[0], color3[1], color3[2]);
+void exit_colormyday(short color10[], short color11[]) {
 	init_color(10, color10[0], color10[1], color10[2]);
 	init_color(11, color11[0], color11[1], color11[2]);
 	endwin();
@@ -57,22 +43,24 @@ void exit_colormyday() {
 }
 
 void resize_colormyday() {
-	windows_init();
-	data_init();
+	int rainbow_h = windows_init();
+	data_init(rainbow_h);
 	display_init();
 }
 
 int main(int argc, char* argv[]) {
 	setlocale(LC_ALL, "");
+
 	/* input/output */
 	io_init();
 
 	/* configure window */
-	curses_init();
-	windows_init();
+	short color10[3], color11[3];
+	curses_init(color10, color11);
+	int rainbow_h = windows_init();
 
 	/* data */
-	data_init();
+	data_init(rainbow_h);
 
 	/* display */	
 	display_init();
@@ -88,10 +76,6 @@ int main(int argc, char* argv[]) {
 	pthread_create(&tick_thread, NULL, tick_init, NULL);
 
 	/* keyboard input */
-	pthread_mutex_lock(&display_access);
-	wmove(rainbow, 0, 0);
-	wrefresh(rainbow);
-	pthread_mutex_unlock(&display_access);
 	
 	int key;
 	for(;;) {
@@ -99,18 +83,18 @@ int main(int argc, char* argv[]) {
 
 		switch(key) {
 			case KEY_UP:
-				key_up();
+				key_up_handler();
 				break;
 			case KEY_DOWN:
-				exit_colormyday();
+				exit_colormyday(color10, color11);
 			case KEY_RESIZE:
 				resize_colormyday();
 				break;
 		}
 
-		/* switch((char)key) {
+		switch((char)key) {
 			case 'h':
-				move_right();
+				move_left();
 				break;
 			case 'j':
 				move_down();
@@ -119,12 +103,10 @@ int main(int argc, char* argv[]) {
 				move_up();
 				break;
 			case 'l':
-				move_left();
+				move_right();
 				break;
-		} */
+		}
 
-		mvwaddch(bottom_data, 5, 5, (char)key);
-		wrefresh(bottom_data);
 	}
 
 	endwin();

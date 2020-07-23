@@ -91,6 +91,15 @@ void push_eventp_llist(struct event event, struct eventp_llist** list) {
 	*list = ret;
 }
 
+void push_display_eventp_llist(struct display_event display_event, struct display_eventp_llist** list) {
+	struct display_eventp_llist* ret;
+	ret = malloc(sizeof(struct display_eventp_llist));
+	ret->display_event = display_event;
+	ret->next = *list;
+
+	*list = ret;
+}
+
 /*
  * LINKED LIST TOOLS DUMP
  */
@@ -127,12 +136,33 @@ void dump_event(struct event event) {
 	char* name = event.name;
 	printf("EVENT: %s, %d-%d\n", name, start_time, end_time);
 }
+
+void dump_display_event(struct display_event display_event) {
+	int start_time = display_event.event.start_time;
+	int end_time = display_event.event.end_time;
+	char* name = display_event.event.name;
+	char* group = display_event.group;
+	int color = display_event.color;
+	printf("EVENT: %s, %s, %d-%d, %d\n", name, group, start_time, end_time, color);
+}
+
 void dump_eventp_llist(struct eventp_llist* list) {
 	struct eventp_llist* temp = list;
 	while (temp) {
 		dump_event(temp->event);
 		temp = temp->next;
 	}
+}
+
+/* Misc. dumper */
+void dump_cursor(int y, int x) {
+	printf("y: %d, x: %d\n", y, x);
+
+}
+
+void print_cursor(int y, int x) {
+	mvwprintw(rainbow, y+3, x+8, "C");
+	wrefresh(rainbow);
 }
 
 /*

@@ -1,6 +1,7 @@
 #include "colormyday.h"
 
-void key_up() {
+void key_up_handler() {
+	/* End old event & begin new event */
 	pthread_mutex_lock(&variable_access);
 	pthread_mutex_lock(&display_access);
 
@@ -12,8 +13,8 @@ void key_up() {
 		return;
 	}
 
-	if (current_event.name != NULL) {
-		display_event(end_current_event());
+	if (current_event.event.name != NULL) {
+		disp_event(end_current_event());
 	}
 
 	char* temp_name;
@@ -28,6 +29,8 @@ void key_up() {
 	display_end_event(current_event);
 
 	if (cursor_ticking) {
+		cursor_event = current_event;
+		display_note(cursor_event);
 		cursor_tick();
 	}
 
@@ -35,7 +38,7 @@ void key_up() {
 	pthread_mutex_unlock(&variable_access);
 }
 
-/* void move_right() {
+void move_right() {
 	enum cursor_movement movement = RIGHT;
 	cursor_move(movement);
 }
@@ -53,4 +56,4 @@ void move_up() {
 void move_left() {
 	enum cursor_movement movement = LEFT;
 	cursor_move(movement);
-} */
+}

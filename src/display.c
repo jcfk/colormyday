@@ -302,7 +302,7 @@ void disp_event(struct display_event display_event) {
 	while (start_x + color_width*start_y <= end_x + color_width*end_y) {
 		if (start_y == cursor[0] && start_x == cursor[1]) {
 			wattron(rainbow, A_BOLD);
-			mvwprintw(rainbow, start_y+3, start_x+8, "\u2588");
+			mvwprintw(rainbow, start_y+3, start_x+8, "C");
 
 			if (i > len) {
 				wattroff(rainbow, A_BOLD);

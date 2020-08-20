@@ -72,6 +72,7 @@ void make_group_color_dict(struct charpint_llist** list) {
 /*
  * EVENT DATA
  */
+/* DEPRECATE IN FAVOR OF CURSOR TO EVENT */
 struct display_event time_to_event(int time) {
 	struct display_eventp_llist* temp = current_events;
 
@@ -80,7 +81,7 @@ struct display_event time_to_event(int time) {
 		start_time = temp->display_event.event.start_time;
 		end_time = temp->display_event.event.end_time;
 
-		if (start_time < time && (time < end_time || (end_time == -1 && time < current_time))) {
+		if (start_time < time && (time < end_time || (end_time == -1 && time <= current_time))) {
 			return temp->display_event;
 		}
 
@@ -95,9 +96,8 @@ struct display_event time_to_event(int time) {
 	ret.event.note = "-";
 	ret.group = "-";
 	ret.color = -1;
-	
-	return ret;
 
+	return ret;
 }
 
 void begin_event(char* name) {
@@ -111,16 +111,17 @@ void begin_event(char* name) {
 	
 	make_current_event(temp);
 
-	if (cursor_ticking) {
-		cursor_event = current_event;
-
-	}
-
 	push_display_eventp_llist(current_event, &current_events);
-
 }
 
 struct display_event end_current_event() {
+	if (current_event.event.name == NULL) {
+		struct display_event temp;
+		temp.event.name = NULL;
+
+		return temp;
+	}
+
 	current_events->display_event.event.end_time = current_time;
 
 	struct display_event temp = current_event;
@@ -148,7 +149,7 @@ void make_current_events(struct charp_llist* list,
 	while(temp) {
 		temp_event = file_to_event(temp->content);
 		temp_display_event.event = temp_event;
-		
+
 		int c = 1;
 		char* group = NULL;
 		group = charpcharp_dict(member_group_dict, temp_event.name);
@@ -195,17 +196,24 @@ void reload_current_events() {
 void data_init(int rainbow_h) {
 	current_time = time(NULL);
 
-	/* Initialize rainbow to display to today from (rainbow_h - 3)/2 days ago */
-	int earlier_bound_relative_days = (rainbow_h - 3)/2;
-	int later_bound_relative_days = 0;
-	
-	struct tm earlier_tm = *time_to_tm_local(current_time -
-		earlier_bound_relative_days*86400);
-	struct tm later_tm = *time_to_tm_local(current_time -
-		later_bound_relative_days*86400);
+	if (rainbow_h == -1) {
+		earlier_bound_day = -1;
+		later_bound_day = -1;
 
-	earlier_bound_day = start_of_day(&earlier_tm);
-	later_bound_day = end_of_day(&later_tm);
+	} else {
+		/* Initialize rainbow to display to today from (rainbow_h - 3)/2 days ago */
+		int earlier_bound_relative_days = (rainbow_h - 3) - 4;
+		int later_bound_relative_days = 0;
+		
+		struct tm earlier_tm = *time_to_tm_local(current_time -
+			earlier_bound_relative_days*86400);
+		struct tm later_tm = *time_to_tm_local(current_time -
+			later_bound_relative_days*86400);
+
+		earlier_bound_day = start_of_day(&earlier_tm);
+		later_bound_day = end_of_day(&later_tm);
+
+	}
 
 	/* Load color globals */
 	make_member_group_hex_dicts(&member_group_dict, &group_hex_dict);

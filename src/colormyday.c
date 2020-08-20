@@ -1,6 +1,7 @@
 #include "colormyday.h"
 
 short color10[3], color11[3];
+pthread_mutex_t display_access, variable_access;
 
 void save_default_colors() {
 	color_content(10, &color10[0], &color10[1], &color10[2]);
@@ -55,35 +56,42 @@ int main(int argc, char* argv[]) {
 	/* input/output */
 	io_init();
 
-	/* configure window */
-	curses_init(color10, color11);
-	int rainbow_h = windows_init();
+	/* args */
+	if (argc == 1) { /* display normally */
+		/* configure window */
+		curses_init(color10, color11);
+		int rainbow_h = windows_init();
 
-	/* data */
-	data_init(rainbow_h);
+		/* data */
+		data_init(rainbow_h);
 
-	/* display */	
-	display_init();
+		/* display */
+		display_init();
 
-	/* tick thread */ 
-	pthread_mutex_t display_access;
-	pthread_mutex_init(&display_access, NULL);
+		/* tick thread */ 
+		pthread_mutex_init(&display_access, NULL);
 
-	pthread_mutex_t variable_access;
-	pthread_mutex_init(&variable_access, NULL);
+		pthread_mutex_init(&variable_access, NULL);
 
-	pthread_t tick_thread;
-	pthread_create(&tick_thread, NULL, tick_init, NULL);
+		pthread_t tick_thread;
+		pthread_create(&tick_thread, NULL, tick_init, NULL);
 
-	/* keyboard input */
-	int key;
-	for(;;) {
-		key = wgetch(rainbow);
+		/* keyboard input */
+		int key;
+		for(;;) {
+			key = wgetch(rainbow);
 
-		input_handle(key);
+			input_handle(key);
+		}
+
+		endwin();
+
+	} else { /* execute silently and exit */
+		data_init(-1);
+
+		args_handle(argc, argv);
+
 	}
-
-	endwin();
 
 	return(0);
 }

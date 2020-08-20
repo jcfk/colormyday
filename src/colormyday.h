@@ -68,11 +68,13 @@ enum cursor_movement {
 	DOWN,
 	UP,
 	RIGHT,
-	BOTTOM
+	BOTTOM,
+	ZERO,
+	DOLLAR
 };
 
 /* globals */
-pthread_mutex_t display_access, variable_access;
+extern pthread_mutex_t display_access, variable_access;
 extern int current_time;
 extern int earlier_bound_day, later_bound_day;
 extern struct display_eventp_llist* current_events;
@@ -89,6 +91,7 @@ void* tick_init(void* arg);
 
 /* input.c */
 void input_handle(int key);
+void args_handle(int argc, char* argv[]);
 
 /* data.c */
 void reload_current_events();
@@ -113,7 +116,6 @@ char* get_command();
 void display_duration(struct display_event display_event);
 void disp_event(struct display_event display_event);
 void display_end_event(struct display_event display_event);
-void cursor_tick();
 void cursor_init();
 int windows_init();
 void display_init();
@@ -132,6 +134,7 @@ struct charint_llist* get_color_dict();
 /* utils.c */
 int end_of_day(struct tm* tm);
 int start_of_day(struct tm* tm);
+char* event_duration(int start_time, int end_time);
 struct tm* time_to_tm_local(int time);
 void push_charp_llist(char* name, struct charp_llist** list);
 void push_charpcharp_llist(char* content_1, char* content_2, struct charpcharp_llist** list);

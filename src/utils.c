@@ -1,22 +1,5 @@
 #include "colormyday.h"
 
-/* char* file_to_string(FILE* f) {
-	char* buffer;
-	long length;
-
-	fseek(f, 0, SEEK_END);
-	length = ftell(f);
-	fseek(f, 0, SEEK_SET);
-
-	buffer = malloc(length);
-	if (buffer) {
-		fread(buffer, 1, length, f);
-
-	}
-
-	return buffer;
-} */
-
 /*
  * DICTIONARY TOOLS
  */
@@ -190,4 +173,17 @@ int start_of_day(struct tm* tm) {
 
 	/* printf("Start: %d\n", temp); */
 	return temp;
+}
+
+char* event_duration(int start_time, int end_time) {
+		char* ret;
+
+		int duration = end_time - start_time;
+		int h = duration / 3600;
+		int m = (duration % 3600)/60;
+		int s = (duration % 3600) % 60;
+	
+		asprintf(&ret, "%d:%d:%d", h, m, s);
+
+		return ret;
 }

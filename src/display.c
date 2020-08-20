@@ -1,13 +1,22 @@
 #include "colormyday.h"
 
+/* terminal size */
 int term_h;
 int term_w;
+
+/* window sizes */
 int top_data_x, top_data_y, top_data_h, top_data_w;
 int rainbow_x, rainbow_y, rainbow_h, rainbow_w;
 int bottom_data_x, bottom_data_y, bottom_data_h, bottom_data_w;
 int controls_x, controls_y, controls_h, controls_w;
+
+/* actual size of color bar */
 int color_width;
+
+/* time represented by one character */
 double slot_duration;
+
+/* cursor */
 int cursor[2];
 int time_cursor[2];
 bool cursor_ticking;
@@ -57,9 +66,15 @@ void cursor_move(enum cursor_movement movement) {
 			new_y = time_cursor[0];
 			new_x = time_cursor[1];
 			break;
+		case ZERO:
+			new_x = 0; 
+			break;
+		case DOLLAR:
+			new_x = color_width - 1;
+			break;
 
 	}
-	
+
 	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
 	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
 
@@ -68,7 +83,7 @@ void cursor_move(enum cursor_movement movement) {
 
 	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
 	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
-	
+
 	if (cursor[0] == time_cursor[0] && cursor[1] == time_cursor[1]) {	
 		cursor_ticking = true;
 	} else {
@@ -83,7 +98,14 @@ void cursor_move(enum cursor_movement movement) {
 	disp_event(cursor_event);
 
 	display_note(cursor_event);
-	
+
+}
+
+struct display_event cursor_to_event(int cursor[2]) {
+	int new_time = earlier_bound_day + cursor[0] * 86400 + cursor[1] * slot_duration + (slot_duration / 2);
+
+	return time_to_event(new_time);
+
 }
 
 /*
@@ -174,7 +196,7 @@ void display_note(struct display_event display_event) {
 	char* note = display_event.event.note;
 	char* group = display_event.group;
 	int color = display_event.color;
-	
+
 	struct tm teeem_s = *time_to_tm_local(start_time);
 	char start_time_english[50];
 	strftime(start_time_english, sizeof(start_time_english), "%a, %H:%M:%S", &teeem_s);
@@ -187,8 +209,10 @@ void display_note(struct display_event display_event) {
 		struct tm teeem_e = *time_to_tm_local(end_time);
 		char end_time_english[50];
 		strftime(end_time_english, sizeof(end_time_english), "%a, %H:%M:%S", &teeem_e);
-		
-		asprintf(&title, "C: %s (group: %s) | %s -> %s", name, group, start_time_english, end_time_english);
+
+		char* t = event_duration(start_time, end_time);
+
+		asprintf(&title, "C: %s (group: %s) | %s -> %s | Duration: %s", name, group, start_time_english, end_time_english, t);
 
 	}
 
@@ -234,6 +258,15 @@ int right_x_bound(int diff) {
 	}
 }
 
+int over_x(int diff) {
+	float a, b, ret;
+	a = diff % 86400;
+	b = slot_duration;
+	ret = a/b;
+
+	return floor(ret);
+}
+
 void display_duration(struct display_event display_event) {
 	char* temp;
 	char* name = display_event.event.name;
@@ -265,10 +298,6 @@ void disp_event(struct display_event display_event) {
 	end_time = display_event.event.end_time;
 	name = display_event.event.name;
 
-	if (end_time == -1) {
-		end_time = current_time;
-	}
-
 	start_y = 0;
 	start_x = 0;
 
@@ -276,23 +305,28 @@ void disp_event(struct display_event display_event) {
 		diff = start_time - earlier_bound_day;
 		start_y = floor(diff/86400);
 		start_x = left_x_bound(diff);
-	
 	}
 
 	end_y = 0;
 	end_x = 0;
 
-	diff = end_time - earlier_bound_day;
-	end_y = end_y + floor(diff/86400);
-	end_x = right_x_bound(diff);
+	if (end_time == -1) {
+		end_y = time_cursor[0];
+		end_x = time_cursor[1];
+	} else {
+		diff = end_time - earlier_bound_day;
+		end_y = floor(diff/86400);
+		end_x = right_x_bound(diff);
+	}
 
 	/* Actually display event */
 	int len = strlen(name);
 
 	char* group = display_event.group;
+	char* note = display_event.event.note;
 	int c = display_event.color;
 
-	asprintf(&name, "%s-%s", name, group);
+	asprintf(&name, "%s-%s", name, note);
 	int len2 = strlen(name);
 
 	wattron(rainbow, COLOR_PAIR(c));
@@ -326,7 +360,7 @@ void disp_event(struct display_event display_event) {
 			mvwaddch(rainbow, start_y+3, start_x+8, *name);
 
 		} else {
-			mvwaddch(rainbow, start_y+3, start_x+8, '=');
+			mvwprintw(rainbow, start_y+3, start_x+8, "\u223c");
 
 		}
 
@@ -357,23 +391,6 @@ void display_events() {
 /*
  * TICK
  */
-void display_tick() {
-	int diff = current_time - earlier_bound_day;
-
-	if (current_event.event.name != NULL) {
-		display_duration(current_event);
-		disp_event(current_event);
-	}
-
-	time_cursor[0] = floor(diff/86400);
-	time_cursor[1] = right_x_bound(diff);
-
-	if (cursor_ticking) {
-		cursor_tick();
-	} 
-
-}
-
 void cursor_tick() {
 	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
 	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
@@ -386,6 +403,27 @@ void cursor_tick() {
 
 	wrefresh(rainbow);
 
+	disp_event(cursor_event);
+
+	/* really, deprecate this in favor of a cursor_to_event, already */
+	cursor_event = time_to_event(current_time);
+	cursor_event = cursor_to_event(cursor);
+	display_note(current_event);
+}
+
+void display_tick() {
+	int diff = current_time - earlier_bound_day;
+	time_cursor[0] = floor(diff/86400);
+	time_cursor[1] = right_x_bound(diff);
+
+	if (cursor_ticking) {
+		cursor_tick();
+	}
+
+	if (current_event.event.name != NULL) {
+		display_duration(current_event);
+		disp_event(current_event);
+	}
 }
 
 /*
@@ -405,7 +443,20 @@ void rainbow_init() {
 void cursor_init() {
 	cursor_ticking = true;
 
-	display_tick();
+	int diff = current_time - earlier_bound_day;
+	time_cursor[0] = floor(diff/86400);
+	time_cursor[1] = right_x_bound(diff);
+	
+	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
+	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
+
+	cursor[0] = time_cursor[0];
+	cursor[1] = time_cursor[1];
+
+	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
+	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
+
+	wrefresh(rainbow);
 
 }
 

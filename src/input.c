@@ -3,7 +3,7 @@
 void end_begin() {
 	/* End old event & begin new event */
 	char* name = get_command();
-	
+
 	if (strcmp(name, "") == 0) {
 		pthread_mutex_unlock(&display_access);
 		pthread_mutex_unlock(&variable_access);
@@ -25,11 +25,7 @@ void end_begin() {
 	display_duration(current_event);
 	disp_event(current_event);
 
-	if (cursor_ticking) {
-		cursor_event = current_event;
-		display_note(cursor_event);
-		cursor_tick();
-	}
+	display_tick();
 }
 
 void move_right() {
@@ -56,6 +52,16 @@ void move_bottom() {
 	enum cursor_movement movement = BOTTOM;
 	cursor_move(movement);
 
+}
+
+void move_0() {
+	enum cursor_movement movement = ZERO;
+	cursor_move(movement);
+}
+
+void move_dollar() {
+	enum cursor_movement movement = DOLLAR;
+	cursor_move(movement);
 }
 
 void edit_selection() {
@@ -101,12 +107,56 @@ void input_handle(int key) {
 		case 'G':
 			move_bottom();
 			break;
+		case '0':
+			move_0();
+			break;
+		case '$':
+			move_dollar();
+			break;
+
 		case 'e':
 			edit_selection();
 			break;
+
 	}
 
 	pthread_mutex_unlock(&display_access);
 	pthread_mutex_unlock(&variable_access);
+}
+
+void args_handle(int argc, char* argv[]) {
+	char* arg;
+	int i = 1;
+	while(i < argc) {
+		arg = argv[i];
+
+		if (strcmp(arg, "begin") == 0) {
+			i += 1;
+			if (i == argc) {
+				printf("ERR: Please enter the name of the event you'd like to begin. For example:\n\n\t$ colormyday begin Exercise\n\t$ colormyday begin \"Side Project\"\n\n");
+
+			} else {
+				struct display_event last = end_current_event();
+				begin_event(argv[i]);
+				printf("Begun event: %s (ended %s)\n", argv[i], last.event.name);
+
+			}
+
+		} else if (strcmp(arg, "end") == 0) {
+			struct display_event last = end_current_event();
+			
+			if (last.event.name == NULL) {
+				printf("No current event to end.\n");
+
+			} else {
+				char* t = event_duration(last.event.start_time, last.event.end_time);
+
+				printf("Ended event: %s (duration %s)\n", last.event.name, t);
+
+			}
+
+			i += 1;
+		}
+	}
 }
 

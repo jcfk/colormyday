@@ -9,7 +9,7 @@ void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, st
 	xmlDocPtr doc;
 	xmlNodePtr node;
 
-	doc = xmlParseFile(cmdgroups_path);
+	doc = xmlReadFile(cmdgroups_path, NULL, 256);
 	node = xmlDocGetRootElement(doc);
 
 	*member_group_dict = NULL;
@@ -38,8 +38,8 @@ void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, st
 			sub_group = sub_group->next;
 		}
 
-		group = group->next;
 		i += 1;
+		group = group->next;
 	}
 	
 	xmlFreeDoc(doc);
@@ -51,7 +51,6 @@ void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, st
 struct charp_llist* get_events_between(int earlier_bound, int later_bound) {
 	struct dirent** namelist;
 	struct charp_llist* ret = NULL;
-
 
 	char* file;
 	char* file_temp;
@@ -67,7 +66,7 @@ struct charp_llist* get_events_between(int earlier_bound, int later_bound) {
 		}
 
 		start_time = strsep(&file_temp, "-");
-		if (earlier_bound < atoi(start_time) && atoi(start_time) < later_bound) {
+		if (earlier_bound < atoi(start_time) && (atoi(start_time) < later_bound || later_bound == -1)) {
 			if (!found) {
 				asprintf(&current_event_path, "%s/%s", cmddb_path, file);
 			}
@@ -78,6 +77,7 @@ struct charp_llist* get_events_between(int earlier_bound, int later_bound) {
 		} else {
 			if (found) {
 				if (earlier_bound < atoi(strsep(&file_temp, "-"))) {
+					asprintf(&file, "%s/%s", cmddb_path, file);
 					push_charp_llist(file, &ret);
 				}
 				break;
@@ -127,7 +127,7 @@ struct event file_to_event(char* file) {
 	xmlDocPtr doc;
 	xmlNodePtr node;
 
-	doc = xmlParseFile(file);
+	doc = xmlReadFile(file, NULL, 256);
 	node = xmlDocGetRootElement(doc);
 
 	node = node->xmlChildrenNode;

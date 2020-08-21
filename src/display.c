@@ -51,16 +51,35 @@ void cursor_move(enum cursor_movement movement) {
 	
 	switch (movement) {
 		case UP:
-			new_y = new_y - 1;
+			if (new_y-1 >= 0) {
+				new_y = new_y - 1;
+			}
+
 			break;
 		case DOWN:
 			new_y = new_y + 1;
 			break;
 		case LEFT:
-			new_x = new_x - 1;
+			if (new_x-1 >= 0) {
+				new_x = new_x - 1;
+			} else {
+				if (new_y-1 >= 0) {
+					new_y = new_y - 1;
+					new_x = color_width - 1;
+
+				}
+			}
 			break;
 		case RIGHT:
-			new_x = new_x + 1;
+			if (new_x+1 < color_width) {
+				new_x = new_x + 1;
+
+			} else {
+				new_y = new_y + 1;
+				new_x = 0;
+
+			}
+
 			break;
 		case BOTTOM:
 			new_y = time_cursor[0];

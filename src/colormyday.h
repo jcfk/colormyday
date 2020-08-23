@@ -64,13 +64,18 @@ struct display_eventp_llist {
 };
 
 enum cursor_movement {
-	LEFT,
-	DOWN,
-	UP,
-	RIGHT,
-	BOTTOM,
-	ZERO,
-	DOLLAR
+	C_LEFT,
+	C_DOWN,
+	C_UP,
+	C_RIGHT,
+	C_BOTTOM,
+	C_ZERO,
+	C_DOLLAR
+};
+
+enum rainbow_scroll {
+	R_UP,
+	R_DOWN
 };
 
 /* globals */
@@ -102,6 +107,7 @@ int make_color(char* code);
 void make_group_color_dict();
 void begin_event(char* name);
 struct display_event end_current_event();
+void scroll_current_events(enum rainbow_scroll direction);
 
 /* display.c */
 extern WINDOW* top_data;

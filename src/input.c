@@ -1,12 +1,10 @@
 #include "colormyday.h"
 
-void end_begin() {
+void end_begin_disp() {
 	/* End old event & begin new event */
 	char* name = get_command();
 
 	if (strcmp(name, "") == 0) {
-		pthread_mutex_unlock(&display_access);
-		pthread_mutex_unlock(&variable_access);
 		return;
 	}
 
@@ -21,47 +19,7 @@ void end_begin() {
 
 	werase(top_data);
 	box(top_data, 0, 0);
-	mvwprintw(top_data, 1, 1, "COLORMYDAY");
-	display_duration(current_event);
-	disp_event(current_event);
-
 	display_tick();
-}
-
-void move_right() {
-	enum cursor_movement movement = RIGHT;
-	cursor_move(movement);
-}
-
-void move_down() {
-	enum cursor_movement movement = DOWN;
-	cursor_move(movement);
-}
-
-void move_up() {
-	enum cursor_movement movement = UP;
-	cursor_move(movement);
-}
-
-void move_left() {
-	enum cursor_movement movement = LEFT;
-	cursor_move(movement);
-}
-
-void move_bottom() {
-	enum cursor_movement movement = BOTTOM;
-	cursor_move(movement);
-
-}
-
-void move_0() {
-	enum cursor_movement movement = ZERO;
-	cursor_move(movement);
-}
-
-void move_dollar() {
-	enum cursor_movement movement = DOLLAR;
-	cursor_move(movement);
 }
 
 void edit_selection() {
@@ -82,7 +40,7 @@ void input_handle(int key) {
 		
 	switch(key) {
 		case KEY_UP:
-			end_begin();
+			end_begin_disp();
 			break;
 		case KEY_DOWN:
 			exit_colormyday();
@@ -91,27 +49,35 @@ void input_handle(int key) {
 			break;
 	}
 
+	enum cursor_movement movement;
 	switch((char)key) {
 		case 'h':
-			move_left();
+			movement = C_LEFT;
+			cursor_move(movement);
 			break;
 		case 'j':
-			move_down();
+			movement = C_DOWN;
+			cursor_move(movement);
 			break;
 		case 'k':
-			move_up();
+			movement = C_UP;
+			cursor_move(movement);
 			break;
 		case 'l':
-			move_right();
+			movement = C_RIGHT;
+			cursor_move(movement);
 			break;
 		case 'G':
-			move_bottom();
+			movement = C_BOTTOM;
+			cursor_move(movement);
 			break;
 		case '0':
-			move_0();
+			movement = C_ZERO;
+			cursor_move(movement);
 			break;
 		case '$':
-			move_dollar();
+			movement = C_DOLLAR;
+			cursor_move(movement);
 			break;
 
 		case 'e':
@@ -124,39 +90,58 @@ void input_handle(int key) {
 	pthread_mutex_unlock(&variable_access);
 }
 
+/*
+ * SCRIPT MODE
+ */
+
+void end_begin_script(char* name) {
+	if (current_event.event.name != NULL) {
+		struct display_event last = end_current_event();
+		begin_event(name);
+		printf("Begun event: %s (ended %s)\n", name, last.event.name);
+
+	} else {
+		begin_event(name);
+		printf("Begun event: %s\n", name);
+
+	}
+
+}
+
+void end_current_event_script() {
+	if (current_event.event.name != NULL) {
+		struct display_event last = end_current_event();
+		char* t = event_duration(last.event.start_time, last.event.end_time);
+		printf("Ended event: %s (duration %s)\n", last.event.name, t);
+		
+	} else {
+		printf("No current event to end.\n");
+
+	}
+
+}
+
 void args_handle(int argc, char* argv[]) {
 	char* arg;
 	int i = 1;
 	while(i < argc) {
 		arg = argv[i];
 
+		i += 1;
 		if (strcmp(arg, "begin") == 0) {
-			i += 1;
 			if (i == argc) {
 				printf("ERR: Please enter the name of the event you'd like to begin. For example:\n\n\t$ colormyday begin Exercise\n\t$ colormyday begin \"Side Project\"\n\n");
 
 			} else {
-				struct display_event last = end_current_event();
-				begin_event(argv[i]);
-				printf("Begun event: %s (ended %s)\n", argv[i], last.event.name);
+				end_begin_script(argv[i]);
 
 			}
 
 		} else if (strcmp(arg, "end") == 0) {
-			struct display_event last = end_current_event();
-			
-			if (last.event.name == NULL) {
-				printf("No current event to end.\n");
+			end_current_event_script();
 
-			} else {
-				char* t = event_duration(last.event.start_time, last.event.end_time);
-
-				printf("Ended event: %s (duration %s)\n", last.event.name, t);
-
-			}
-
-			i += 1;
 		}
+
 	}
 }
 

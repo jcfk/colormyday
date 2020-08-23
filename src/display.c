@@ -11,7 +11,7 @@ int bottom_data_x, bottom_data_y, bottom_data_h, bottom_data_w;
 int controls_x, controls_y, controls_h, controls_w;
 
 /* actual size of color bar */
-int color_width;
+int color_w, color_h;
 
 /* time represented by one character */
 double slot_duration;
@@ -27,106 +27,6 @@ WINDOW* rainbow;
 WINDOW* bottom_data;
 WINDOW* controls;
 
-char* get_command() {
-	mvwprintw(controls, 1, 1, "(name):");
-	wrefresh(controls);
-
-	echo();
-
-	char* ret = malloc(50);
-	mvwgetnstr(controls, 1, 10, ret, 50);
-
-	noecho();
-
-	werase(controls);
-	box(controls, 0, 0);
-	wrefresh(controls);
-
-	return ret;
-}
-
-void cursor_move(enum cursor_movement movement) {
-	int new_y = cursor[0];
-	int new_x = cursor[1];
-	
-	switch (movement) {
-		case UP:
-			if (new_y-1 >= 0) {
-				new_y = new_y - 1;
-			}
-
-			break;
-		case DOWN:
-			new_y = new_y + 1;
-			break;
-		case LEFT:
-			if (new_x-1 >= 0) {
-				new_x = new_x - 1;
-			} else {
-				if (new_y-1 >= 0) {
-					new_y = new_y - 1;
-					new_x = color_width - 1;
-
-				}
-			}
-			break;
-		case RIGHT:
-			if (new_x+1 < color_width) {
-				new_x = new_x + 1;
-
-			} else {
-				new_y = new_y + 1;
-				new_x = 0;
-
-			}
-
-			break;
-		case BOTTOM:
-			new_y = time_cursor[0];
-			new_x = time_cursor[1];
-			break;
-		case ZERO:
-			new_x = 0; 
-			break;
-		case DOLLAR:
-			new_x = color_width - 1;
-			break;
-
-	}
-
-	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
-	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
-
-	cursor[0] = new_y;
-	cursor[1] = new_x;
-
-	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
-	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
-
-	if (cursor[0] == time_cursor[0] && cursor[1] == time_cursor[1]) {	
-		cursor_ticking = true;
-	} else {
-		cursor_ticking = false;
-	}
-
-	disp_event(cursor_event);
-
-	int new_time = earlier_bound_day + new_y * 86400 + new_x * slot_duration + (slot_duration / 2);
-	cursor_event = time_to_event(new_time);	
-
-	disp_event(cursor_event);
-
-	display_note(cursor_event);
-
-}
-
-struct display_event cursor_to_event(int cursor[2]) {
-	int new_time = earlier_bound_day + cursor[0] * 86400 + cursor[1] * slot_duration + (slot_duration / 2);
-
-	return time_to_event(new_time);
-
-}
-
 /*
  * SCAFFOLDING DISPLAYERS
  */
@@ -138,8 +38,8 @@ void new_hour_marks() {
 	int width = rainbow_w - 7;
 	int interval_w = width / 24;
 	int shift = 8;
-	color_width = interval_w * 24;
-	slot_duration = 86400/(double) color_width;
+	color_w = interval_w * 24;
+	slot_duration = 86400/(double) color_w;
 
 	int i = 0;
 	int i2;
@@ -180,19 +80,25 @@ void new_hour_marks() {
 void new_date_marks() {
 	int earlier_time = earlier_bound_day;
 	int later_time = later_bound_day;
-	
+
+	color_h = 0;
+
 	char date[7];
 	char day[4];
 	time_t temp;
 	int i = 0;
+	int c;
 	while (earlier_time <= later_time) {
 		temp = earlier_time;
 		strftime(day, 4, "%a", localtime(&temp));
 		strftime(date, 7, "%a %d", localtime(&temp));
 
-		int c = 0;
 		if ((strcmp(day, "Sat") == 0) || (strcmp(day, "Sun") == 0)) {
 			c = 3;
+
+		} else {
+			c = 0;
+
 		}
 
 		wattron(rainbow, COLOR_PAIR(c));
@@ -200,6 +106,8 @@ void new_date_marks() {
 		wattroff(rainbow, COLOR_PAIR(c));
 		i = i + 1;
 		earlier_time = earlier_time + 86400;
+
+		color_h = color_h + 1;
 	}
 
 	wrefresh(rainbow);
@@ -306,42 +214,79 @@ void display_duration(struct display_event display_event) {
 
 }
 
+void clear_rainbow() {
+	int start_y = 0;
+	int start_x = 0;
+
+	while (start_y*color_w + start_x <= color_w * color_h) {
+		mvwaddch(rainbow, start_y+3, start_x+8, ' ');
+
+		if (start_x > color_w) {
+			start_y = start_y + 1;
+			start_x = 0;
+
+		} else {
+			start_x = start_x + 1;
+
+		}
+	}
+
+	wrefresh(rainbow);
+}
+
 void disp_event(struct display_event display_event) {
 	/* Get display position */
-	char* name;
-	int start_time, end_time;
 	int start_x, start_y, end_x, end_y;
 	int diff;
 	
-	start_time = display_event.event.start_time;
-	end_time = display_event.event.end_time;
-	name = display_event.event.name;
+	int start_time = display_event.event.start_time;
+	int end_time = display_event.event.end_time;
+	char* name = display_event.event.name;
 
-	start_y = 0;
-	start_x = 0;
+	/*
+	if (((end_time < earlier_bound_day) && (end_time != -1)) || (later_bound_day < start_time)) {
+		return;
 
-	if (earlier_bound_day < start_time) {
+	}
+	*/
+
+	if (start_time < earlier_bound_day) {
+		start_y = 0;
+		start_x = 0;
+
+	} else {
 		diff = start_time - earlier_bound_day;
 		start_y = floor(diff/86400);
 		start_x = left_x_bound(diff);
+
+	}
+	
+	if (later_bound_day < end_time) {
+		end_time = later_bound_day;
+
 	}
 
-	end_y = 0;
-	end_x = 0;
-
 	if (end_time == -1) {
-		end_y = time_cursor[0];
-		end_x = time_cursor[1];
+		if (time_cursor[0] > color_h - 1) {
+			end_y = color_h - 1;
+			end_x = color_w - 1;
+
+		} else {
+			end_y = time_cursor[0];
+			end_x = time_cursor[1];
+
+		}
+
 	} else {
 		diff = end_time - earlier_bound_day;
 		end_y = floor(diff/86400);
 		end_x = right_x_bound(diff);
+
 	}
 
 	/* Actually display event */
 	int len = strlen(name);
 
-	char* group = display_event.group;
 	char* note = display_event.event.note;
 	int c = display_event.color;
 
@@ -352,13 +297,14 @@ void disp_event(struct display_event display_event) {
 	wattron(rainbow, A_BOLD);
 	int i = 0;
 	bool printing_name = true;
-	while (start_x + color_width*start_y <= end_x + color_width*end_y) {
+	while (start_x + color_w*start_y <= end_x + color_w*end_y) {
 		if (start_y == cursor[0] && start_x == cursor[1]) {
 			wattron(rainbow, A_BOLD);
 			mvwprintw(rainbow, start_y+3, start_x+8, "C");
 
 			if (i > len) {
 				wattroff(rainbow, A_BOLD);
+
 			}
 
 			cursor_event = display_event;
@@ -386,13 +332,16 @@ void disp_event(struct display_event display_event) {
 		++name;
 		i = i + 1;
 		
-		start_y = start_y + ((start_x + 1) / color_width);
-		start_x = (start_x + 1) % color_width;	
+		start_y = start_y + ((start_x + 1) / color_w);
+		start_x = (start_x + 1) % color_w;	
 
 	}
+
+	wattroff(rainbow, A_BOLD);
 	wattroff(rainbow, COLOR_PAIR(c));
 
 	wrefresh(rainbow);
+
 }
 
 void display_events() {
@@ -404,7 +353,158 @@ void display_events() {
 		disp_event(temp_display_event);
 
 		temp = temp->next;
+
 	}
+}
+
+/*
+ * INPUT
+ */
+void scrolling(enum rainbow_scroll direction) {
+	if (direction == R_UP) {
+		earlier_bound_day = earlier_bound_day - 86400;
+		later_bound_day = later_bound_day - 86400;
+
+		time_cursor[0] = time_cursor[0] + 1;
+
+	} else {
+		earlier_bound_day = earlier_bound_day + 86400;
+		later_bound_day = later_bound_day + 86400;
+
+		time_cursor[0] = time_cursor[0] - 1;
+
+	}
+
+	scroll_current_events(direction);
+
+	new_date_marks();
+
+	clear_rainbow();
+
+	display_events();
+	
+}
+
+char* get_command() {
+	mvwprintw(controls, 1, 1, "(name):");
+	wrefresh(controls);
+
+	echo();
+
+	char* ret = malloc(50);
+	mvwgetnstr(controls, 1, 10, ret, 50);
+
+	noecho();
+
+	werase(controls);
+	box(controls, 0, 0);
+	wrefresh(controls);
+
+	return ret;
+}
+
+struct display_event cursor_to_event(int cursor_y, int cursor_x) {
+	int new_time = earlier_bound_day + cursor_y * 86400 + cursor_x * slot_duration + (slot_duration / 2);
+
+	return time_to_event(new_time);
+
+}
+
+void cursor_move(enum cursor_movement movement) {
+	int new_y = cursor[0];
+	int new_x = cursor[1];
+	
+	switch (movement) {
+		case C_UP:
+			if (new_y-1 >= 0) {
+				new_y = new_y - 1;
+
+			} else {
+				enum rainbow_scroll direction = R_UP;
+				scrolling(direction);
+
+			}
+
+			break;
+
+		case C_DOWN:
+			if (new_y+1 < color_h) {
+				new_y = new_y + 1;
+
+			} else {
+				enum rainbow_scroll direction = R_DOWN;
+				scrolling(direction);
+
+			}
+
+			break;
+
+		case C_LEFT:
+			if (new_x-1 >= 0) {
+				new_x = new_x - 1;
+
+			} else {
+				if (new_y-1 >= 0) {
+					new_y = new_y - 1;
+					new_x = color_w - 1;
+
+				}
+			}
+
+			break;
+
+		case C_RIGHT:
+			if (new_x+1 < color_w) {
+				new_x = new_x + 1;
+
+			} else {
+				new_y = new_y + 1;
+				new_x = 0;
+
+			}
+
+			break;
+
+		case C_BOTTOM:
+			new_y = time_cursor[0];
+			new_x = time_cursor[1];
+
+			break;
+
+		case C_ZERO:
+			new_x = 0; 
+
+			break;
+
+		case C_DOLLAR:
+			new_x = color_w - 1;
+
+			break;
+
+	}
+
+	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
+	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
+
+	cursor[0] = new_y;
+	cursor[1] = new_x;
+
+	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
+	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
+
+	if (cursor[0] == time_cursor[0] && cursor[1] == time_cursor[1]) {	
+		cursor_ticking = true;
+	} else {
+		cursor_ticking = false;
+	}
+
+	disp_event(cursor_event);
+
+	cursor_event = cursor_to_event(new_y, new_x);
+	disp_event(cursor_event);
+
+	display_note(cursor_event);
+
 }
 
 /*
@@ -425,8 +525,7 @@ void cursor_tick() {
 	disp_event(cursor_event);
 
 	/* really, deprecate this in favor of a cursor_to_event, already */
-	cursor_event = time_to_event(current_time);
-	cursor_event = cursor_to_event(cursor);
+	cursor_event = cursor_to_event(cursor[0], cursor[1]);
 	display_note(current_event);
 }
 
@@ -440,6 +539,7 @@ void display_tick() {
 	}
 
 	if (current_event.event.name != NULL) {
+		mvwprintw(top_data, 1, 1, "COLORMYDAY");
 		display_duration(current_event);
 		disp_event(current_event);
 	}

@@ -66,7 +66,6 @@ void make_group_color_dict(struct charpint_llist** list) {
 			list);
 		temp = temp->next;
 	}
-
 }
 
 /*
@@ -135,13 +134,13 @@ struct display_event end_current_event() {
 }
 
 /* Lists events from youngest (current_event) to oldest */
-void make_current_events(struct charp_llist* list,
+struct display_eventp_llist* make_current_events(struct charp_llist* list,
 	struct charpcharp_llist* member_group_dict,
 	struct charpint_llist* group_color_dict) 
 	{
 
 	struct charp_llist* temp = list;
-	current_events = NULL;
+	struct display_eventp_llist* current_events_temp = NULL;
 
 	struct event temp_event;
 	struct display_event temp_display_event;
@@ -164,9 +163,11 @@ void make_current_events(struct charp_llist* list,
 			current_event = temp_display_event;
 		}
 		
-		push_display_eventp_llist(temp_display_event, &current_events);
+		push_display_eventp_llist(temp_display_event, &current_events_temp);
 		temp = temp->next;
 	}
+
+	return current_events_temp;
 }
 
 void make_current_event(struct event event) {
@@ -187,7 +188,74 @@ void make_current_event(struct event event) {
 }
 
 void reload_current_events() {
-	make_current_events(get_events_between(earlier_bound_day, later_bound_day), member_group_dict, group_color_dict);
+	current_events = make_current_events(get_events_between(earlier_bound_day, later_bound_day), member_group_dict, group_color_dict);
+}
+
+void scroll_current_events(enum rainbow_scroll direction) {
+	struct display_eventp_llist* new_events;
+
+	if (direction == R_UP) {
+		/* add new events */
+		new_events = make_current_events(get_events_between(earlier_bound_day, earlier_bound_day + 86400), member_group_dict, group_color_dict);
+
+		if (new_events != NULL) { 
+			if (new_events->display_event.event.end_time >= earlier_bound_day - 86400) {
+				new_events = new_events->next;
+
+			}
+
+			struct display_eventp_llist* temp = current_events;
+			while (temp->next) {
+				temp = temp->next;
+
+			}
+
+			temp->next = new_events;
+
+		}
+
+		/* remove old events */
+		while (current_events->display_event.event.start_time >= later_bound_day) {
+			current_events = current_events->next;
+
+		}
+
+	} else {
+		/* add new events */
+		new_events = make_current_events(get_events_between(later_bound_day - 86400, later_bound_day), member_group_dict, group_color_dict);
+
+		if (new_events != NULL) {
+			struct display_eventp_llist* temp = new_events;
+			struct display_eventp_llist* temp_2 = temp;
+
+			while (temp->next) {
+				temp_2 = temp;
+				temp = temp->next;
+
+			}
+
+			if (temp->display_event.event.start_time <= later_bound_day - 86400) {
+				temp_2->next = current_events;
+
+			} else {
+				temp->next = current_events;
+
+			}
+
+			current_events = new_events;
+
+		}
+
+		/* remove old events */
+		struct display_eventp_llist* temp = current_events;
+		while (((temp->display_event.event.end_time >= earlier_bound_day) || (temp->display_event.event.end_time == -1)) && (temp->next != NULL)) {
+			temp = temp->next;
+
+		}
+
+		temp->next = NULL;
+
+	}
 }
 
 /*

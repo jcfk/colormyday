@@ -2,16 +2,24 @@
 
 ### About
 
-`colormyday` is the colorful life activity visualizer for the terminal. Record your activities in real-time to gain direct graphical insight into your lifestyle!
+`colormyday` is the colorful life activity visualizer for the terminal. Record your activities in real-time to gain direct graphical insight into your lifestyle & habits!
 
 ### Features
 
-* **vim-like UI:** move through time with `hjkl`, `$`, `G`, and other favorites. Begin and end events with `:`.
+* **curses-based**
+* **vim-like UX:** move through time with `hjkl`, `0`, `$`, `g`, `G`, `w`, & `b`. Begin and end events with `:`.
 * **custom colors and groups:** activities can be grouped into groups. Configure your group color palette!
-* **activity notes:** add more detail to your activies.
+* **activity notes:** add detail to your activies.
+* **scriptable interaction:** begin and end events from the command line:
+
+	```
+	$ colormyday begin "Side Project"
+	$ colormyday end
+	```
 
 SOON:
-* **scriptable interaction:** begin and end events without ever opening the interface.
+* **day notes**
+* **future events**
 * ...
 
 ### Installation

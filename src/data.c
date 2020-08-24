@@ -91,9 +91,9 @@ struct display_event time_to_event(int time) {
 
 	ret.event.start_time = 0;
 	ret.event.end_time = 0;
-	ret.event.name = "-";
-	ret.event.note = "-";
-	ret.group = "-";
+	ret.event.name = NULL;
+	ret.event.note = NULL;
+	ret.group = NULL;
 	ret.color = -1;
 
 	return ret;

@@ -111,6 +111,7 @@ void new_date_marks() {
 	}
 
 	wrefresh(rainbow);
+
 }
 
 /*
@@ -124,23 +125,31 @@ void display_note(struct display_event display_event) {
 	char* group = display_event.group;
 	int color = display_event.color;
 
-	struct tm teeem_s = *time_to_tm_local(start_time);
-	char start_time_english[50];
-	strftime(start_time_english, sizeof(start_time_english), "%a, %H:%M:%S", &teeem_s);
-
 	char* title = NULL;
-	if (end_time == -1) {
-		asprintf(&title, "C: %s (group: %s) | %s -> NOW", name, group, start_time_english);
+
+	if (name == NULL) {
+		title = "C: (no event)";
+		note = "(no event)";
+		color = -1;
 
 	} else {
-		struct tm teeem_e = *time_to_tm_local(end_time);
-		char end_time_english[50];
-		strftime(end_time_english, sizeof(end_time_english), "%a, %H:%M:%S", &teeem_e);
+		char start_time_english[50];
+		struct tm teeem_s = *time_to_tm_local(start_time);
+		strftime(start_time_english, sizeof(start_time_english), "%a, %H:%M:%S", &teeem_s);
 
-		char* t = event_duration(start_time, end_time);
+		if (end_time == -1) {
+			asprintf(&title, "C: %s (group: %s) | %s -> NOW", name, group, start_time_english);
 
-		asprintf(&title, "C: %s (group: %s) | %s -> %s | Duration: %s", name, group, start_time_english, end_time_english, t);
+		} else {
+			struct tm teeem_e = *time_to_tm_local(end_time);
+			char end_time_english[50];
+			strftime(end_time_english, sizeof(end_time_english), "%a, %H:%M:%S", &teeem_e);
 
+			char* t = event_duration(start_time, end_time);
+
+			asprintf(&title, "C: %s (group: %s) | %s -> %s | Duration: %s", name, group, start_time_english, end_time_english, t);
+
+		}
 	}
 
 	werase(bottom_data);
@@ -197,14 +206,22 @@ int over_x(int diff) {
 void display_duration(struct display_event display_event) {
 	char* temp;
 	char* name = display_event.event.name;
+	int c;
 
-	int diff = current_time - display_event.event.start_time;
-	float hours = ((float) diff)/3600;
+	if (name == NULL) {
+		temp = "Current: (no event)";
+		c = -1;
 
-	asprintf(&temp, "Current: %s - %.2f hrs", name, hours);
+	} else {
+		int diff = current_time - display_event.event.start_time;
+		float hours = ((float) diff)/3600;
 
-	int c = display_event.color;
+		asprintf(&temp, "Current: %s - %.2f hrs", name, hours);
 
+		c = display_event.color;
+	}
+
+	mvwprintw(top_data, 1, 1, "COLORMYDAY");
 	wattron(top_data, COLOR_PAIR(c));
 	wattron(top_data, A_BOLD);
 	mvwprintw(top_data, 1, (top_data_w - (int) strlen(temp))/2, temp);
@@ -242,6 +259,11 @@ void disp_event(struct display_event display_event) {
 	int start_time = display_event.event.start_time;
 	int end_time = display_event.event.end_time;
 	char* name = display_event.event.name;
+
+	if (name == NULL) {
+		return;
+
+	}
 
 	/*
 	if (((end_time < earlier_bound_day) && (end_time != -1)) || (later_bound_day < start_time)) {
@@ -483,25 +505,40 @@ void cursor_move(enum cursor_movement movement) {
 
 	}
 
-	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
-	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
-
-	cursor[0] = new_y;
-	cursor[1] = new_x;
-
-	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
-	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
-
 	if (cursor[0] == time_cursor[0] && cursor[1] == time_cursor[1]) {	
 		cursor_ticking = true;
 	} else {
 		cursor_ticking = false;
 	}
+	
+	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
+	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
+	mvwprintw(rainbow, 2, new_x + 8, "\u25bc");
+	mvwprintw(rainbow, new_y + 3, 7, "\u25b6");
 
-	disp_event(cursor_event);
+	if (cursor_event.event.name == NULL) {
+		mvwaddch(rainbow, cursor[0] + 3 , cursor[1] + 8, ' ');
 
-	cursor_event = cursor_to_event(new_y, new_x);
-	disp_event(cursor_event);
+	} else {
+		cursor[0] = new_y;
+		cursor[1] = new_x;
+
+		disp_event(cursor_event);
+		
+	}
+
+	cursor[0] = new_y;
+	cursor[1] = new_x;
+	cursor_event = cursor_to_event(cursor[0], cursor[1]);
+
+	if (cursor_event.event.name == NULL) {
+		mvwaddch(rainbow, cursor[0] + 3, cursor[1] + 8, 'C');
+
+	} else {
+		disp_event(cursor_event);
+
+
+	}
 
 	display_note(cursor_event);
 
@@ -524,9 +561,12 @@ void cursor_tick() {
 
 	disp_event(cursor_event);
 
-	/* really, deprecate this in favor of a cursor_to_event, already */
 	cursor_event = cursor_to_event(cursor[0], cursor[1]);
-	display_note(current_event);
+
+	if (current_event.event.name == NULL) {
+		display_note(current_event);
+
+	}
 }
 
 void display_tick() {
@@ -536,13 +576,13 @@ void display_tick() {
 
 	if (cursor_ticking) {
 		cursor_tick();
+
 	}
 
-	if (current_event.event.name != NULL) {
-		mvwprintw(top_data, 1, 1, "COLORMYDAY");
-		display_duration(current_event);
-		disp_event(current_event);
-	}
+	mvwprintw(top_data, 1, 1, "COLORMYDAY");
+	display_duration(current_event);
+	disp_event(current_event);
+
 }
 
 /*
@@ -554,9 +594,10 @@ void top_data_init() {
 
 }
 
-void rainbow_init() {
+void scaffolding_init() {
 	new_hour_marks();
 	new_date_marks();
+
 }
 
 void cursor_init() {
@@ -572,6 +613,8 @@ void cursor_init() {
 	cursor[0] = time_cursor[0];
 	cursor[1] = time_cursor[1];
 
+	mvwaddch(rainbow, cursor[0] + 3, cursor[1] + 8, 'C');
+
 	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
 	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
 
@@ -582,22 +625,19 @@ void cursor_init() {
 void display_init() {
 	top_data_init();
 
-	rainbow_init();	
+	scaffolding_init();	
 
 	cursor_init();
 
 	display_events();
 
-	if (current_event.event.name != NULL) {
-		display_duration(current_event);
-	}
+	display_duration(current_event);
 	
-	if (cursor_event.event.name != NULL) {
-		display_note(cursor_event);
-	}
+	display_note(cursor_event);
 
 	wmove(rainbow, 0, 0);
 	wrefresh(rainbow);
+
 }
 
 int windows_init() {

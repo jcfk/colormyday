@@ -7,7 +7,7 @@
 ### Features
 
 * **curses-based**
-* **vim-like UX:** move through time with `hjkl`, `0`, `$`, `g`, `G`, `w`, & `b`. Begin and end events with `:`.
+* **vim-like UX:** move through time with `hjkl`, `0`, `$`, `g`, `G`, `w`, & `b`. Begin events with `:begin`.
 * **custom colors and groups:** activities can be grouped into groups. Configure your group color palette!
 * **activity notes:** add detail to your activies.
 * **scriptable interaction:** begin and end events from the command line:
@@ -24,7 +24,7 @@ SOON:
 
 ### Installation
 
-Run `make && make install` in `src`.
+Run `make && sudo make install` in `src`.
 
 ### How-to
 

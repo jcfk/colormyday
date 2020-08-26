@@ -3,7 +3,7 @@
 char* cmd_path = NULL;
 char* cmddb_path = NULL;
 char* cmdgroups_path = NULL;
-char* current_event_path;
+/* char* current_event_path; */
 
 void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, struct charpcharp_llist** group_hex_dict) {
 	xmlDocPtr doc;
@@ -54,41 +54,52 @@ struct charp_llist* get_events_between(int earlier_bound, int later_bound) {
 
 	char* file;
 	char* file_temp;
+	char* file_tempp;
 	char* start_time;
 	bool found = false;
-	int d = scandir(cmddb_path, &namelist, 0, alphasort);
+	bool done = false;
+	int d = scandir(cmddb_path, &namelist, NULL, alphasort);
 	while (d--) {
 		file = namelist[d]->d_name;
-		asprintf(&file_temp, "%s", file);
+		file_temp = strdup(file);
+		file_tempp = file_temp;
 
-		if ((strcmp(file, ".") == 0) || (strcmp(file, "..") == 0)) {
-			break;
-		}
-
-		start_time = strsep(&file_temp, "-");
-		if (earlier_bound < atoi(start_time) && (atoi(start_time) < later_bound || later_bound == -1)) {
-			if (!found) {
-				asprintf(&current_event_path, "%s/%s", cmddb_path, file);
+		if (!done) {
+			if ((strcmp(file, ".") == 0) || (strcmp(file, "..") == 0)) {
+				free(namelist[d]);
+				free(file_tempp);
+				continue;
 			}
 
-			asprintf(&file, "%s%s%s", cmddb_path, "/", file);
-			push_charp_llist(file, &ret);
-			found = true;
-		} else {
-			if (found) {
-				if (earlier_bound < atoi(strsep(&file_temp, "-"))) {
-					asprintf(&file, "%s/%s", cmddb_path, file);
-					push_charp_llist(file, &ret);
+			start_time = strsep(&file_temp, "-");
+			if (earlier_bound < atoi(start_time) && (atoi(start_time) < later_bound || later_bound == -1)) {
+				asprintf(&file, "%s%s%s", cmddb_path, "/", file);
+				push_charp_llist(file, &ret);
+				found = true;
+
+			} else {
+				if (found) {
+					if (earlier_bound < atoi(strsep(&file_temp, "-"))) {
+						asprintf(&file, "%s/%s", cmddb_path, file);
+						push_charp_llist(file, &ret);
+
+					}
+
+					done = true;
+
 				}
-				break;
 			}
 		}
+
 		free(namelist[d]);
+		free(file_tempp);
+
 	}
 
 	free(namelist);
 
 	return ret;
+
 }
 
 void event_to_file(struct event event) {
@@ -113,11 +124,14 @@ void event_to_file(struct event event) {
 	if (event.end_time != -1) {
 		remove(new_file);
 		asprintf(&new_file, "%s/%d-%d", cmddb_path, event.start_time, event.end_time);
+
 	}
 
 	xmlSaveFileEnc(new_file, doc, "UTF-8");
-
 	xmlFreeDoc(doc);
+
+	free(start_time);
+	free(end_time);
 
 }
 
@@ -126,21 +140,30 @@ struct event file_to_event(char* file) {
 	
 	xmlDocPtr doc;
 	xmlNodePtr node;
+	xmlChar* temp;
 
 	doc = xmlReadFile(file, NULL, 256);
 	node = xmlDocGetRootElement(doc);
 
 	node = node->xmlChildrenNode;
-	e.start_time = atoi((char*) xmlNodeListGetString(doc, node->xmlChildrenNode, 1));
+	temp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+	e.start_time = atoi((char*) temp);
+	xmlFree(temp);
+
 	node = node->next;
-	e.end_time = atoi((char*) xmlNodeListGetString(doc, node->xmlChildrenNode, 1));
+	temp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+	e.end_time = atoi((char*) temp);
+	xmlFree(temp);
+
 	node = node->next;
 	e.name = (char*) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
 	node = node->next;
 	e.note = (char*) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
 
 	xmlFreeDoc(doc);
 	return e;
+
 }
 
 char* cursor_event_path() {
@@ -148,11 +171,14 @@ char* cursor_event_path() {
 	
 	if (cursor_event.event.end_time == -1) {
 		asprintf(&ret, "%s/%d", cmddb_path, cursor_event.event.start_time);
+
 	} else {
 		asprintf(&ret, "%s/%d-%d", cmddb_path, cursor_event.event.start_time, cursor_event.event.end_time);
+
 	}
 
 	return ret;
+
 }
 
 /*
@@ -169,16 +195,19 @@ void io_init() {
 	struct stat st = {0};
 	if (stat(cmd_path, &st) == -1) {
 		mkdir(cmd_path, 0700);
+
 	}
 	
 	if (stat(cmddb_path, &st) == -1) {
 		mkdir(cmddb_path, 0700);
+
 	}
 
 	if (access(cmdgroups_path, F_OK) == -1) {
 		FILE* f;
 		f = fopen(cmdgroups_path, "w");
 		fclose(f);
+
 	}
 }
 

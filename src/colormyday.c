@@ -2,6 +2,7 @@
 
 short color10[3], color11[3];
 pthread_mutex_t display_access, variable_access;
+bool thread_exit;
 
 void save_default_colors() {
 	color_content(10, &color10[0], &color10[1], &color10[2]);
@@ -40,7 +41,21 @@ void curses_init() {
 void exit_colormyday() {
 	init_color(10, color10[0], color10[1], color10[2]);
 	init_color(11, color11[0], color11[1], color11[2]);
+
+	/* free_colormyday() */
+
 	endwin();
+
+	thread_exit = true;
+
+	/* 
+	pthread_mutex_unlock(&variable_access);
+	pthread_mutex_unlock(&display_access);
+
+	pthread_mutex_lock(&variable_access);
+	pthread_mutex_lock(&display_access);
+	*/
+
 	exit(0);
 }
 
@@ -69,12 +84,18 @@ int main(int argc, char* argv[]) {
 		display_init();
 
 		/* tick thread */ 
+		thread_exit = false;
+
 		pthread_mutex_init(&display_access, NULL);
 
 		pthread_mutex_init(&variable_access, NULL);
 
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
 		pthread_t tick_thread;
-		pthread_create(&tick_thread, NULL, tick_init, NULL);
+		pthread_create(&tick_thread, &attr, tick_init, NULL);
 
 		/* keyboard input */
 		int key;
@@ -89,7 +110,7 @@ int main(int argc, char* argv[]) {
 	} else { /* execute silently and exit */
 		data_init(-1);
 
-		args_handle(argc, argv);
+		args_handle_script(argc, argv);
 
 	}
 

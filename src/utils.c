@@ -1,6 +1,64 @@
 #include "colormyday.h"
 
 /*
+ * STRING TOOLS
+ */
+char** split_args(char* string) {
+	int len = 1;
+	char** ret = malloc(sizeof(char*));
+
+	char* chunk = NULL;
+	char* token;
+	char* temp;
+	bool quotes = false;
+	while ((token = strsep(&string, " "))) {
+		if (!quotes) {
+			if ((token[0] == '"') && (token[strlen(token)-1] == '"')) {
+				token++;
+				token[strlen(token)-1] = 0;
+				chunk = token;
+
+			} else if (token[0] == '"') {
+				quotes = true;
+				token++;
+				chunk = token;
+
+			}
+
+		} else {
+			if (token[strlen(token)-1] == '"') {
+				quotes = false;
+				token[strlen(token)-1] = 0;
+				
+				asprintf(&temp, "%s %s", chunk, token);
+				strcpy(chunk, temp);
+				free(temp);
+
+				token = chunk;
+
+			} else {
+				asprintf(&temp, "%s %s", chunk, token);
+				strcpy(chunk, temp);
+				free(temp);
+
+				continue;
+
+			}
+		}
+
+		ret = realloc(ret, sizeof(char*) * (len + 1));
+		ret[len] = token;
+		len = len + 1;
+
+	}
+
+	ret = realloc(ret, sizeof(char*) * (len + 1));
+	ret[len] = 0;
+	return ret;
+
+}
+
+/*
  * DICTIONARY TOOLS
  */
 char* charpcharp_dict(struct charpcharp_llist* list, char* c) {
@@ -61,7 +119,7 @@ void push_charp_llist(char* name, struct charp_llist** list) {
 	ret = malloc(sizeof(struct charp_llist));
 	ret->content = name;
 	ret->next = *list;
-	
+
 	*list = ret;
 }
 
@@ -70,7 +128,7 @@ void push_eventp_llist(struct event event, struct eventp_llist** list) {
 	ret = malloc(sizeof(struct eventp_llist));
 	ret->event = event;
 	ret->next = *list;
-
+	
 	*list = ret;
 }
 
@@ -81,6 +139,58 @@ void push_display_eventp_llist(struct display_event display_event, struct displa
 	ret->next = *list;
 
 	*list = ret;
+}
+
+/*
+ * LINKED LIST TOOLS FREE
+ */
+void free_charpcharp_llist(struct charpcharp_llist* list) {
+	
+
+}
+
+void free_charpint_llist(struct charpint_llist* list) {
+
+
+}
+
+/* char*s in this llist are either all malloc'ed or not */
+void free_charp_llist(struct charp_llist* list, bool malloced) {
+	struct charp_llist* temp = list;
+	struct charp_llist* tempp;
+	
+	while (temp) {
+		if (malloced) {
+			free(temp->content);
+
+		}
+
+		tempp = temp;
+		temp = temp->next;
+
+		free(tempp);
+	
+	}
+}
+
+void free_eventp_llist(struct eventp_llist* list) {
+
+
+}
+
+void free_display_eventp_llist(struct display_eventp_llist* list) {
+	struct display_eventp_llist* temp = list;
+	struct display_eventp_llist* tempp;
+
+	while (temp) {
+		tempp = temp;
+		temp = temp->next;
+
+		free(tempp->display_event.event.name);
+		free(tempp->display_event.event.note);
+		free(tempp);
+
+	}
 }
 
 /*
@@ -134,6 +244,7 @@ void dump_eventp_llist(struct eventp_llist* list) {
 	while (temp) {
 		dump_event(temp->event);
 		temp = temp->next;
+
 	}
 }
 
@@ -165,6 +276,7 @@ int end_of_day(struct tm* tm) {
 
 	/* printf("End: %d\n", temp); */
 	return temp;
+
 }
 
 int start_of_day(struct tm* tm) {
@@ -173,6 +285,7 @@ int start_of_day(struct tm* tm) {
 
 	/* printf("Start: %d\n", temp); */
 	return temp;
+
 }
 
 char* event_duration(int start_time, int end_time) {

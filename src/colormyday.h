@@ -68,9 +68,12 @@ enum cursor_movement {
 	C_DOWN,
 	C_UP,
 	C_RIGHT,
+	C_TOP,
 	C_BOTTOM,
 	C_ZERO,
-	C_DOLLAR
+	C_DOLLAR,
+	C_W,
+	C_B
 };
 
 enum rainbow_scroll {
@@ -86,6 +89,7 @@ extern struct display_eventp_llist* current_events;
 extern struct display_event current_event;
 extern struct display_event cursor_event;
 extern bool cursor_ticking;
+extern bool thread_exit;
 
 /* colormyday.c */
 void exit_colormyday();
@@ -96,7 +100,8 @@ void* tick_init(void* arg);
 
 /* input.c */
 void input_handle(int key);
-void args_handle(int argc, char* argv[]);
+void args_handle_curses(char** args);
+void args_handle_script(int argc, char* argv[]);
 
 /* data.c */
 void reload_current_events();
@@ -119,6 +124,7 @@ void display_events();
 void cursor_move(enum cursor_movement movement);
 void display_tick();
 char* get_command();
+void command();
 void display_duration(struct display_event display_event);
 void disp_event(struct display_event display_event);
 void display_end_event(struct display_event display_event);
@@ -126,6 +132,7 @@ void cursor_init();
 int windows_init();
 void display_init();
 void display_note(struct display_event display_event);
+
 
 /* io.c */
 char* cursor_event_path();
@@ -138,17 +145,24 @@ struct charp_llist* get_events_between(int earlier_bound, int later_bound);
 struct charint_llist* get_color_dict();
 
 /* utils.c */
+char** split_args(char* string);
 int end_of_day(struct tm* tm);
 int start_of_day(struct tm* tm);
 char* event_duration(int start_time, int end_time);
 struct tm* time_to_tm_local(int time);
+
 void push_charp_llist(char* name, struct charp_llist** list);
 void push_charpcharp_llist(char* content_1, char* content_2, struct charpcharp_llist** list);
 void push_charpint_llist(char* c_content, int i_content, struct charpint_llist** list);
 void push_eventp_llist(struct event event, struct eventp_llist** list);
 void push_display_eventp_llist(struct display_event display_event, struct display_eventp_llist** list);
+
+void free_charp_llist(struct charp_llist* list, bool malloced);
+void free_display_eventp_llist(struct display_eventp_llist* list);
+
 int charpint_dict(struct charpint_llist* list, char* c);
 char* charpcharp_dict(struct charpcharp_llist* list, char* c);
+
 void dump_charp_llist(struct charp_llist* list);
 void dump_charpcharp_llist(struct charpcharp_llist* list);
 void dump_charpint_llist(struct charpint_llist* list);

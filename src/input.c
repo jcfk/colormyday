@@ -38,7 +38,7 @@ void edit_selection() {
 	endwin();
 
 	char* command = NULL;
-	asprintf(&command, "nano %s", cursor_event_path());
+	asprintf(&command, "vi %s", cursor_event_path());
 	system(command);
 
 	reload_current_events();
@@ -69,6 +69,10 @@ void args_handle_curses(char** args) {
 		} else if ((strcmp(arg, "end") == 0) ||
 			   (strcmp(arg, "End") == 0)) {
 			end_event_curses();
+
+		} else if ((strcmp(arg, "edit") == 0) ||
+			   (strcmp(arg, "Edit") == 0)) {
+			edit_selection();
 
 		}
 
@@ -139,9 +143,6 @@ void input_handle(int key) {
 			break;
 
 		/* special keys */
-		case 'e':
-			edit_selection();
-			break;
 		case ':':
 			command();
 			break;
@@ -150,6 +151,7 @@ void input_handle(int key) {
 
 	pthread_mutex_unlock(&display_access);
 	pthread_mutex_unlock(&variable_access);
+
 }
 
 /*

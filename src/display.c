@@ -136,6 +136,7 @@ void clear_rainbow() {
 	}
 
 	wrefresh(rainbow);
+
 }
 
 /*
@@ -335,8 +336,17 @@ void disp_event(struct display_event display_event) {
 	char* note = display_event.event.note;
 	int c = display_event.color;
 
-	asprintf(&name, "%s-%s", name, note);
-	int len2 = strlen(name);
+	int len2;
+	if (strcmp(note, "-1") != 0) {
+		asprintf(&name, "%s-%s", name, note);
+		len2 = strlen(name);
+
+	} else {
+		asprintf(&name, "%s ", name);
+		len2 = len + 1;
+
+	}
+
 	char* namep = name;
 
 	wattron(rainbow, COLOR_PAIR(c));
@@ -348,7 +358,7 @@ void disp_event(struct display_event display_event) {
 			wattron(rainbow, A_BOLD);
 			mvwprintw(rainbow, start_y+3, start_x+8, "C");
 
-			if (i > len) {
+			if (i >= len) {
 				wattroff(rainbow, A_BOLD);
 
 			}
@@ -366,6 +376,7 @@ void disp_event(struct display_event display_event) {
 			if (printing_name) {
 				wattroff(rainbow, A_BOLD);
 				printing_name = false;
+
 			}
 
 			mvwaddch(rainbow, start_y+3, start_x+8, *name);
@@ -507,7 +518,7 @@ void scrolling(enum rainbow_scroll direction) {
 char* get_command() {
 	char* disp = ":\u2588";
 
-	mvwprintw(controls, 1, 1, disp);
+	mvwprintw(controls, 0, 0, disp);
 	wrefresh(controls);
 
 	char* ret = malloc(2);
@@ -531,6 +542,7 @@ char* get_command() {
 				if (ret != NULL) {
 					free(ret);
 					ret = NULL;
+
 				}
 
 				reading = false;
@@ -561,8 +573,8 @@ char* get_command() {
 				}
 
 				werase(controls);
-				box(controls, 0, 0);
-				mvwprintw(controls, 1, 1, disp);
+				/* box(controls, 0, 0); */
+				mvwprintw(controls, 0, 0, disp);
 				wrefresh(controls);
 
 				free(disp);
@@ -580,7 +592,7 @@ char* get_command() {
 				ret[len + 1] = 0;
 
 				asprintf(&disp, ":%s\u2588", ret);
-				mvwprintw(controls, 1, 1, disp);
+				mvwprintw(controls, 0, 0, disp);
 				wrefresh(controls);
 
 				free(disp);
@@ -589,7 +601,7 @@ char* get_command() {
 	}
 
 	werase(controls);
-	box(controls, 0, 0);
+	/* box(controls, 0, 0); */
 	wrefresh(controls);
 
 	return ret;
@@ -600,8 +612,6 @@ void command() {
 	char* request = get_command();
 
 	if (request == NULL) {
-		mvwprintw(top_data, 1, 20, "null");
-		wrefresh(top_data);
 		return;
 
 	}
@@ -857,7 +867,6 @@ void display_tick() {
 
 	}
 
-	mvwprintw(top_data, 1, 1, "COLORMYDAY");
 	display_duration(current_event);
 	disp_event(current_event);
 
@@ -924,7 +933,7 @@ void display_init() {
 }
 
 int windows_init() {
-	term_h = (LINES - 1);
+	term_h = LINES;
 	term_w = COLS;
 
 	top_data_x = 0;
@@ -934,7 +943,7 @@ int windows_init() {
 
 	rainbow_x = 0;
 	rainbow_y = top_data_h;
-	rainbow_h = term_h - 14;
+	rainbow_h = term_h - 13;
 	rainbow_w = term_w;
 
 	bottom_data_x = 0;
@@ -944,7 +953,7 @@ int windows_init() {
 	
 	controls_x = 0;
 	controls_y = top_data_h + rainbow_h + bottom_data_h;
-	controls_h = 3;
+	controls_h = 1;
 	controls_w = term_w;
 
 	top_data = newwin(top_data_h, top_data_w, top_data_y, top_data_x);
@@ -954,7 +963,7 @@ int windows_init() {
 	bottom_data = newwin(bottom_data_h, bottom_data_w, bottom_data_y, bottom_data_x);
 	box(bottom_data, 0, 0);
 	controls = newwin(controls_h, controls_w, controls_y, controls_x);
-	box(controls, 0, 0);
+	/* box(controls, 0, 0); */
 
 	wrefresh(top_data);
 	wrefresh(rainbow);
@@ -967,4 +976,5 @@ int windows_init() {
 	keypad(controls, TRUE);
 
 	return rainbow_h;
+
 }

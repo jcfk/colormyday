@@ -4,7 +4,7 @@
  * STRING TOOLS
  */
 char** split_args(char* string) {
-	int len = 1;
+	int len = 0;
 	char** ret = malloc(sizeof(char*));
 
 	char* chunk = NULL;
@@ -46,13 +46,13 @@ char** split_args(char* string) {
 			}
 		}
 
-		ret = realloc(ret, sizeof(char*) * (len + 1));
+		ret = realloc(ret, sizeof(char*) * (len + 2));
 		ret[len] = token;
 		len = len + 1;
 
 	}
 
-	ret = realloc(ret, sizeof(char*) * (len + 1));
+	ret = realloc(ret, sizeof(char*) * (len + 2));
 	ret[len] = 0;
 	return ret;
 
@@ -200,7 +200,6 @@ void dump_charpcharp_llist(struct charpcharp_llist* list) {
 	struct charpcharp_llist* temp = list;
 
 	while(temp) {
-		printf("1: %s, 2: %s\n", temp->content_1, temp->content_2);
 		temp = temp->next;
 	}
 }
@@ -259,6 +258,15 @@ void print_cursor(int y, int x) {
 	wrefresh(rainbow);
 }
 
+void dump_charpp(char** charpp) {
+	int i = 0;
+	while (charpp[i]) {
+		printf("%s\n", charpp[i]);
+		i += 1;
+
+	}
+}
+
 /*
  * TIME TOOLS
  */
@@ -267,6 +275,38 @@ struct tm* time_to_tm_local(int time) {
 	struct tm* ret = localtime(&temp);
 
 	return ret;
+
+}
+
+int string_to_time(char* s) {
+	char* temp_s = strdup(s);
+
+	int data[5];
+	
+	char* token = strtok(temp_s, "-");
+
+	int i = 0;
+	while (token != NULL) {
+		data[i] = atoi(token);
+		token = strtok(NULL, "-");
+
+		i = i + 1;
+
+	}
+
+	struct tm time;
+	time.tm_year = data[0] - 1900;
+	time.tm_mon = data[1] - 1;
+	time.tm_mday = data[2];
+	time.tm_hour = data[3];
+	time.tm_min = data[4];
+	time.tm_sec = 0;
+	time.tm_isdst = -1;
+
+	free(temp_s);
+
+	return (int)mktime(&time);
+
 }
 
 int end_of_day(struct tm* tm) {

@@ -84,7 +84,6 @@ void make_group_color_dict(struct charpint_llist** list) {
 /*
  * EVENT DATA
  */
-/* DEPRECATE IN FAVOR OF CURSOR TO EVENT */
 struct display_event time_to_event(int time) {
 	struct display_eventp_llist* temp = current_events;
 
@@ -93,7 +92,7 @@ struct display_event time_to_event(int time) {
 		start_time = temp->display_event.event.start_time;
 		end_time = temp->display_event.event.end_time;
 
-		if (start_time < time && (time < end_time || (end_time == -1 && time <= current_time))) {
+		if ((start_time < time) && ((time <= end_time) || (end_time == -1 && time <= current_time))) {
 			return temp->display_event;
 
 		}
@@ -115,8 +114,20 @@ struct display_event time_to_event(int time) {
 
 }
 
-void begin_event(char* name) {
-	struct event temp = (struct event) { .start_time = current_time,
+void begin_event(char* name, char* late_time) {
+	/* char* temp_late_time;
+	asprintf(&temp_late_time, "%s", late_time); */
+
+	int temp_time;
+	if (late_time) {
+		temp_time = string_to_time(late_time);
+
+	} else {
+		temp_time = current_time;
+
+	}
+
+	struct event temp = (struct event) { .start_time = temp_time,
 						.end_time = -1,
 						.name = name,
 						.note = "-1"};
@@ -125,20 +136,29 @@ void begin_event(char* name) {
 
 	make_current_event(temp);
 
-	if ((earlier_bound_day <= current_time) && (current_time <= later_bound_day)) {
+	if ((earlier_bound_day <= temp_time) && (temp_time <= later_bound_day)) {
 		push_display_eventp_llist(current_event, &current_events);
 	
 	}
 }
 
-struct display_event end_current_event() {
+struct display_event end_current_event(char* late_time) {
+	int temp_time;
+	if (late_time) {
+		temp_time = string_to_time(late_time);
+
+	} else {
+		temp_time = current_time;
+
+	}
+
 	if (current_events->display_event.event.start_time == current_event.event.start_time) {
-		current_events->display_event.event.end_time = current_time;
+		current_events->display_event.event.end_time = temp_time;
 
 	}
 
 	struct display_event temp = current_event;
-	temp.event.end_time = current_time;
+	temp.event.end_time = temp_time;
 	current_event.event.name = NULL;
 	
 	event_to_file(temp.event);

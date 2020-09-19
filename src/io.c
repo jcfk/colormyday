@@ -108,14 +108,6 @@ void event_to_file(struct event event) {
 
 	xmlDocSetRootElement(doc, root);
 
-	char* start_time;
-	asprintf(&start_time, "%d", event.start_time);
-
-	char* end_time;
-	asprintf(&end_time, "%d", event.end_time);
-
-	xmlNewChild(root, NULL, BAD_CAST "start", BAD_CAST start_time);
-	xmlNewChild(root, NULL, BAD_CAST "end", BAD_CAST end_time);
 	xmlNewChild(root, NULL, BAD_CAST "title", BAD_CAST event.name);
 	xmlNewChild(root, NULL, BAD_CAST "note", BAD_CAST event.note);
 
@@ -130,9 +122,6 @@ void event_to_file(struct event event) {
 	xmlSaveFileEnc(new_file, doc, "UTF-8");
 	xmlFreeDoc(doc);
 
-	free(start_time);
-	free(end_time);
-
 }
 
 struct event file_to_event(char* file) {
@@ -140,28 +129,43 @@ struct event file_to_event(char* file) {
 	
 	xmlDocPtr doc;
 	xmlNodePtr node;
-	xmlChar* temp;
 
 	doc = xmlReadFile(file, NULL, 256);
 	node = xmlDocGetRootElement(doc);
 
+	char* file_dup;
+	asprintf(&file_dup, "%s", file);
+
+	char* file_name;
+	char* file_name_temp = strtok(file_dup, "/");
+	while (file_name_temp != NULL) {
+		file_name = file_name_temp;
+		file_name_temp = strtok(NULL, "/");
+
+	}
+
+	char* time = strtok(file_name, "-");
+	e.start_time = atoi(time);
+
+	time = strtok(NULL, "-");
+	if (time != NULL) {
+		e.end_time = atoi(time);
+
+	} else {
+		e.end_time = -1;
+
+	}
+
 	node = node->xmlChildrenNode;
-	temp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-	e.start_time = atoi((char*) temp);
-	xmlFree(temp);
-
-	node = node->next;
-	temp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-	e.end_time = atoi((char*) temp);
-	xmlFree(temp);
-
-	node = node->next;
 	e.name = (char*) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
 
 	node = node->next;
 	e.note = (char*) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
 
 	xmlFreeDoc(doc);
+	
+	free(file_dup);
+
 	return e;
 
 }

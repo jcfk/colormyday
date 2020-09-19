@@ -1,6 +1,6 @@
 CC = gcc
 
-OPTIONS = -Wall -g -pthread $(shell xml2-config --cflags)
+OPTIONS = -Wall -Wextra -g -pthread $(shell xml2-config --cflags)
 LINKERFLAG = -lncursesw $(shell xml2-config --libs)
 
 FILES = $(wildcard *.c)

@@ -110,8 +110,8 @@ void make_current_event(struct event event);
 void data_init(int rainbow_h);
 int make_color(char* code);
 void make_group_color_dict();
-void begin_event(char* name);
-struct display_event end_current_event();
+void begin_event(char* name, char* late_time);
+struct display_event end_current_event(char* late_time);
 void scroll_current_events(enum rainbow_scroll direction);
 
 /* display.c */
@@ -126,7 +126,7 @@ void display_tick();
 char* get_command();
 void command();
 void display_duration(struct display_event display_event);
-void disp_event(struct display_event display_event);
+void disp_event(struct display_event display_event, bool clear);
 void display_end_event(struct display_event display_event);
 void cursor_init();
 int windows_init();
@@ -150,6 +150,7 @@ int end_of_day(struct tm* tm);
 int start_of_day(struct tm* tm);
 char* event_duration(int start_time, int end_time);
 struct tm* time_to_tm_local(int time);
+int string_to_time(char* s);
 
 void push_charp_llist(char* name, struct charp_llist** list);
 void push_charpcharp_llist(char* content_1, char* content_2, struct charpcharp_llist** list);
@@ -170,5 +171,6 @@ void dump_event(struct event event);
 void dump_display_event(struct display_event display_event);
 void dump_eventp_llist(struct eventp_llist* list);
 void dump_cursor(int y, int x);
+void dump_charpp(char** charpp);
 void print_cursor(int y, int x);
 

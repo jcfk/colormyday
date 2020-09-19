@@ -1,5 +1,6 @@
 #include "colormyday.h"
 
+
 short color10[3], color11[3];
 pthread_mutex_t display_access, variable_access;
 bool thread_exit;

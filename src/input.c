@@ -3,22 +3,23 @@
 /*
  * CURSES MODE
  */
-void end_begin_curses(char* name) {
+void end_begin_curses(char* name, char* late_time) {
 	/* End old event & begin new event */
-
 	if (strcmp(name, "") == 0) {
 		return;
 
 	}
 
 	if (current_event.event.name != NULL) {
-		disp_event(end_current_event());
+		disp_event(current_event, true);
+		struct display_event temp = end_current_event(late_time);
+		disp_event(temp, false);
 
 	}
 
 	char* temp_name;
 	asprintf(&temp_name, "%s", name);
-	begin_event(temp_name);
+	begin_event(temp_name, late_time);
 
 	display_tick();
 
@@ -26,7 +27,7 @@ void end_begin_curses(char* name) {
 
 void end_event_curses() {
 	if (current_event.event.name != NULL) {
-		disp_event(end_current_event());
+		disp_event(end_current_event(NULL), false);
 
 	}
 
@@ -49,34 +50,54 @@ void edit_selection() {
 
 }
 
-void args_handle_curses(char** args) {
-	char* arg;
-	int i = 0;
-	while (args[i + 1]) {
-		arg = args[i + 1];
+void begin_handle(char** args) {
+	char* name;
+	char* late_time = NULL;
 
-		if ((strcmp(arg, "begin") == 0) ||
-		    (strcmp(arg, "Begin") == 0)) {
-			i = i + 1;
-			if (args[i + 1]) {
-				end_begin_curses(args[i + 1]);
-			
+	int i = 1;
+	char* token;
+	bool late = false;
+	while (args[i]) {
+		token = args[i];
+
+		if (late) {
+			late = false;
+			late_time = token;
+
+		} else {
+			if (strcmp(token, "--late") == 0) {
+				late = true;
+
 			} else {
-				end_begin_curses("TTTT");
+				name = token;
 
 			}
-
-		} else if ((strcmp(arg, "end") == 0) ||
-			   (strcmp(arg, "End") == 0)) {
-			end_event_curses();
-
-		} else if ((strcmp(arg, "edit") == 0) ||
-			   (strcmp(arg, "Edit") == 0)) {
-			edit_selection();
-
 		}
 
 		i = i + 1;
+
+	}
+
+	end_begin_curses(name, late_time);
+
+}
+
+/* fix this */
+void args_handle_curses(char** args) {
+	char* arg;
+	arg = args[0];
+
+	if ((strcmp(arg, "begin") == 0) ||
+	    (strcmp(arg, "Begin") == 0)) {
+		begin_handle(args);
+
+	} else if ((strcmp(arg, "end") == 0) ||
+		   (strcmp(arg, "End") == 0)) {
+		end_event_curses();
+
+	} else if ((strcmp(arg, "edit") == 0) ||
+		   (strcmp(arg, "Edit") == 0)) {
+		edit_selection();
 
 	}
 }
@@ -159,12 +180,12 @@ void input_handle(int key) {
  */
 void end_begin_script(char* name) {
 	if (current_event.event.name != NULL) {
-		struct display_event last = end_current_event();
-		begin_event(name);
+		struct display_event last = end_current_event(NULL);
+		begin_event(name, NULL);
 		printf("Begun event: %s (ended %s)\n", name, last.event.name);
 
 	} else {
-		begin_event(name);
+		begin_event(name, NULL);
 		printf("Begun event: %s\n", name);
 
 	}
@@ -173,7 +194,7 @@ void end_begin_script(char* name) {
 
 void end_event_script() {
 	if (current_event.event.name != NULL) {
-		struct display_event last = end_current_event();
+		struct display_event last = end_current_event(NULL);
 		char* t = event_duration(last.event.start_time, last.event.end_time);
 		printf("Ended event: %s (duration %s)\n", last.event.name, t);
 		

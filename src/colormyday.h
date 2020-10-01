@@ -113,6 +113,7 @@ void make_group_color_dict();
 void begin_event(char* name, char* late_time);
 struct display_event end_current_event(char* late_time);
 void scroll_current_events(enum rainbow_scroll direction);
+void free_globals();
 
 /* display.c */
 extern WINDOW* top_data;
@@ -133,6 +134,7 @@ int windows_init();
 void display_init();
 void display_note(struct display_event display_event);
 
+void output(char* message);
 
 /* io.c */
 char* cursor_event_path();

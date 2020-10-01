@@ -45,17 +45,16 @@ void exit_colormyday() {
 
 	/* free_colormyday() */
 
-	endwin();
-
 	thread_exit = true;
 
-	/* 
-	pthread_mutex_unlock(&variable_access);
 	pthread_mutex_unlock(&display_access);
+	pthread_mutex_unlock(&variable_access);
 
-	pthread_mutex_lock(&variable_access);
-	pthread_mutex_lock(&display_access);
-	*/
+	reset_color_pairs();
+
+	/* free_globals(); */
+
+	endwin();
 
 	exit(0);
 }

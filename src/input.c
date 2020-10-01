@@ -10,6 +10,7 @@ void end_begin_curses(char* name, char* late_time) {
 
 	}
 
+	/* If current event exists */
 	if (current_event.event.name != NULL) {
 		disp_event(current_event, true);
 		struct display_event temp = end_current_event(late_time);

@@ -12,7 +12,7 @@ struct charpint_llist* group_color_dict = NULL;
 /*
  * FREE
  */
-void free_colormyday() {
+void free_globals() {
 	
 
 }
@@ -156,6 +156,8 @@ struct display_event end_current_event(char* late_time) {
 		current_events->display_event.event.end_time = temp_time;
 
 	}
+
+	/* output((char*)(intptr_t)current_events->display_event.event.end_time); */
 
 	struct display_event temp = current_event;
 	temp.event.end_time = temp_time;

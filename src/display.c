@@ -860,6 +860,8 @@ void cursor_tick() {
 
 	wrefresh(rainbow);
 
+	/* disp_event(cursor_event, false); */
+
 	cursor_event = cursor_to_event(cursor[0], cursor[1]);
 
 	disp_event(cursor_event, false);
@@ -998,5 +1000,15 @@ int windows_init() {
 	keypad(controls, TRUE);
 
 	return rainbow_h;
+
+}
+
+/*
+ * DUMP
+ */
+void output(char* message) {
+	werase(controls);
+	mvwprintw(controls, 0, 0, message);
+	wrefresh(controls);
 
 }

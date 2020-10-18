@@ -144,15 +144,15 @@ void push_display_eventp_llist(struct display_event display_event, struct displa
 /*
  * LINKED LIST TOOLS FREE
  */
-void free_charpcharp_llist(struct charpcharp_llist* list) {
+/* void free_charpcharp_llist(struct charpcharp_llist* list) { */
 	
 
-}
+/* } */
 
-void free_charpint_llist(struct charpint_llist* list) {
+/* void free_charpint_llist(struct charpint_llist* list) { */
 
 
-}
+/* } */
 
 /* char*s in this llist are either all malloc'ed or not */
 void free_charp_llist(struct charp_llist* list, bool malloced) {
@@ -173,10 +173,10 @@ void free_charp_llist(struct charp_llist* list, bool malloced) {
 	}
 }
 
-void free_eventp_llist(struct eventp_llist* list) {
+/* void free_eventp_llist(struct eventp_llist* list) { */
 
 
-}
+/* } */
 
 void free_display_eventp_llist(struct display_eventp_llist* list) {
 	struct display_eventp_llist* temp = list;

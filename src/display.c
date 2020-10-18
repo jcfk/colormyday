@@ -860,11 +860,11 @@ void cursor_tick() {
 
 	wrefresh(rainbow);
 
-	/* disp_event(cursor_event, false); */
+	disp_event(cursor_event, false);
 
 	cursor_event = cursor_to_event(cursor[0], cursor[1]);
 
-	disp_event(cursor_event, false);
+	/* disp_event(cursor_event, false); */
 
 	display_note(current_event);
 

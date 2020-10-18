@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
 		display_init();
 
 		/* tick thread */ 
-		thread_exit = false;
+		/* thread_exit = false; */
 
 		pthread_mutex_init(&display_access, NULL);
 

@@ -8,22 +8,24 @@ bool thread_exit;
 void save_default_colors() {
 	color_content(10, &color10[0], &color10[1], &color10[2]);
 	color_content(11, &color11[0], &color11[1], &color11[2]);
+
 }
 
 void curses_init() {
 	initscr();
 	cbreak();
 	noecho();
-	/* nonl(); */
 	clear();
 	curs_set(0);
 
 	if (has_colors() == FALSE) {
 		endwin();
 		exit(1);
+
 	}
+
 	start_color();
-	save_default_colors(color10, color11);
+	save_default_colors();
 	use_default_colors();
 
 	/* new black */
@@ -32,18 +34,20 @@ void curses_init() {
 	init_color(11, 1000, 1000, 1000);
 
 	/* weekend color */
-	init_color(1, 482, 0, 1000);
+	init_color(1, 1000, 0, 1000);
 	init_pair(3, 1, -1);
+
+	/* error color */
+	init_pair(4, COLOR_RED, -1);
 
 	init_pair(1, 10, 11);
 	init_pair(2, 11, 10);
+
 }
 
 void exit_colormyday() {
 	init_color(10, color10[0], color10[1], color10[2]);
 	init_color(11, color11[0], color11[1], color11[2]);
-
-	/* free_colormyday() */
 
 	thread_exit = true;
 
@@ -51,8 +55,6 @@ void exit_colormyday() {
 	pthread_mutex_unlock(&variable_access);
 
 	reset_color_pairs();
-
-	/* free_globals(); */
 
 	endwin();
 
@@ -85,7 +87,6 @@ int main(int argc, char* argv[]) {
 
 		/* tick thread */ 
 		/* thread_exit = false; */
-
 		pthread_mutex_init(&display_access, NULL);
 
 		pthread_mutex_init(&variable_access, NULL);

@@ -12,9 +12,9 @@ void end_begin_curses(char* name, char* late_time) {
 
 	/* If current event exists */
 	if (current_event.event.name != NULL) {
-		disp_event(current_event, true);
-		cursor_event = end_current_event(late_time);
-		disp_event(cursor_event, false);
+		disp_event(&current_event, true);
+		cursor_event = *end_current_event(late_time);
+		disp_event(&cursor_event, false);
 
 	}
 
@@ -27,10 +27,10 @@ void end_begin_curses(char* name, char* late_time) {
 }
 
 void end_event_curses() {
-	if (current_event.event.name != NULL) {
-		disp_event(end_current_event(NULL), false);
+	end_current_event(NULL);
 
-	}
+	reload_current_events();
+	display_events();
 
 	display_tick();
 
@@ -100,6 +100,9 @@ void args_handle_curses(char** args) {
 		   (strcmp(arg, "Edit") == 0)) {
 		edit_selection();
 
+	} else {
+		error("%s", "ERR: unknown command");
+
 	}
 }
 
@@ -108,13 +111,6 @@ void input_handle(int key) {
 	pthread_mutex_lock(&display_access);
 		
 	switch(key) {
-		/*
-		case KEY_UP:
-			end_begin_disp();
-			break;
-		case KEY_DOWN:
-			exit_colormyday();
-		*/
 		case KEY_RESIZE:
 			resize_colormyday();
 			break;
@@ -181,7 +177,7 @@ void input_handle(int key) {
  */
 void end_begin_script(char* name) {
 	if (current_event.event.name != NULL) {
-		struct display_event last = end_current_event(NULL);
+		struct display_event last = *end_current_event(NULL);
 		begin_event(name, NULL);
 		printf("Begun event: %s (ended %s)\n", name, last.event.name);
 
@@ -195,7 +191,7 @@ void end_begin_script(char* name) {
 
 void end_event_script() {
 	if (current_event.event.name != NULL) {
-		struct display_event last = end_current_event(NULL);
+		struct display_event last = *end_current_event(NULL);
 		char* t = event_duration(last.event.start_time, last.event.end_time);
 		printf("Ended event: %s (duration %s)\n", last.event.name, t);
 		

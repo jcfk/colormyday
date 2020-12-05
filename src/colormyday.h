@@ -12,6 +12,7 @@
 #include <locale.h>
 #include <wchar.h>
 #include <limits.h>
+#include <stdarg.h>
 
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -33,6 +34,8 @@ struct event {
 struct display_event {
 	char* group;
 	int color;
+	int start[2];
+	int end[2];
 	struct event event;
 };
 
@@ -84,7 +87,8 @@ enum rainbow_scroll {
 /* globals */
 extern pthread_mutex_t display_access, variable_access;
 extern int current_time;
-extern int earlier_bound_day, later_bound_day;
+extern struct tm earlier_bound_day;
+extern struct tm later_bound_day;
 extern struct display_eventp_llist* current_events;
 extern struct display_event current_event;
 extern struct display_event cursor_event;
@@ -111,7 +115,7 @@ void data_init(int rainbow_h);
 int make_color(char* code);
 void make_group_color_dict();
 void begin_event(char* name, char* late_time);
-struct display_event end_current_event(char* late_time);
+struct display_event* end_current_event(char* late_time);
 void scroll_current_events(enum rainbow_scroll direction);
 void free_globals();
 
@@ -121,13 +125,16 @@ extern WINDOW* rainbow;
 extern WINDOW* bottom_data;
 extern WINDOW* controls;
 
+void debug(char* string, ...);
+void error(char* string, ...);
+
 void display_events();
 void cursor_move(enum cursor_movement movement);
 void display_tick();
 char* get_command();
 void command();
 void display_duration(struct display_event display_event);
-void disp_event(struct display_event display_event, bool clear);
+void disp_event(struct display_event* display_event, bool clear);
 void display_end_event(struct display_event display_event);
 void cursor_init();
 int windows_init();
@@ -143,15 +150,16 @@ void make_dicts();
 void io_init();
 void event_to_file(struct event event);
 struct event file_to_event(char* file);
-struct charp_llist* get_events_between(int earlier_bound, int later_bound);
+struct charp_llist* get_events_between(struct tm earlier_bound_tm, struct tm later_bound_tm);
 struct charint_llist* get_color_dict();
 
 /* utils.c */
 char** split_args(char* string);
-int end_of_day(struct tm* tm);
-int start_of_day(struct tm* tm);
+struct tm end_of_day(struct tm tm);
+struct tm start_of_day(struct tm tm);
 char* event_duration(int start_time, int end_time);
-struct tm* time_to_tm_local(int time);
+/* struct tm* time_to_tm_local(int time); */
+struct tm tm_add_interval(struct tm tm, int years, int months, int days);
 int string_to_time(char* s);
 
 void push_charp_llist(char* name, struct charp_llist** list);

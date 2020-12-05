@@ -270,11 +270,28 @@ void dump_charpp(char** charpp) {
 /*
  * TIME TOOLS
  */
-struct tm* time_to_tm_local(int time) {
-	time_t temp = time;
-	struct tm* ret = localtime(&temp);
+/* struct tm* time_to_tm_local(int time) { */
+/* 	time_t temp = time; */
+/* 	struct tm* temp_tm = localtime(&temp); */
+/* 	struct tm* ret = malloc(sizeof(struct tm)); */
 
-	return ret;
+/* 	*ret = *temp_tm; */
+
+/* 	return ret; */
+
+/* } */
+
+struct tm tm_add_interval(struct tm tm, int years, int months, int days) {
+	struct tm temp = tm;
+
+	temp.tm_year = temp.tm_year + years;
+	temp.tm_mon = temp.tm_mon + months;
+	temp.tm_mday = temp.tm_mday + days;
+	temp.tm_isdst = -1;
+
+	time_t temp_t = mktime(&temp);
+
+	return *localtime(&temp_t);
 
 }
 
@@ -309,21 +326,24 @@ int string_to_time(char* s) {
 
 }
 
-int end_of_day(struct tm* tm) {
-	int diff = 60*60*24 - (tm->tm_hour)*60*60 - (tm->tm_min)*60 - (tm->tm_sec);
-	int time = mktime(tm);
-	int temp = time + diff - 1;
+struct tm end_of_day(struct tm tm) {
+	struct tm temp = tm;
 
-	/* printf("End: %d\n", temp); */
+	temp.tm_hour = 23;
+	temp.tm_min = 59;
+	temp.tm_sec = 59;
+
 	return temp;
 
 }
 
-int start_of_day(struct tm* tm) {
-	int time = mktime(tm);
-	int temp = time - (tm->tm_hour)*60*60 - (tm->tm_min)*60 - (tm->tm_sec);
+struct tm start_of_day(struct tm tm) {
+	struct tm temp = tm;
 
-	/* printf("Start: %d\n", temp); */
+	temp.tm_hour = 0;
+	temp.tm_min = 0;
+	temp.tm_sec = 0;
+
 	return temp;
 
 }

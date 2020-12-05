@@ -1,7 +1,8 @@
 #include "colormyday.h"
 
 int current_time;
-int earlier_bound_day, later_bound_day;
+struct tm earlier_bound_day;
+struct tm later_bound_day;
 struct display_eventp_llist* current_events;
 struct display_event current_event;
 
@@ -115,9 +116,6 @@ struct display_event time_to_event(int time) {
 }
 
 void begin_event(char* name, char* late_time) {
-	/* char* temp_late_time;
-	asprintf(&temp_late_time, "%s", late_time); */
-
 	int temp_time;
 	if (late_time) {
 		temp_time = string_to_time(late_time);
@@ -136,13 +134,13 @@ void begin_event(char* name, char* late_time) {
 
 	make_current_event(temp);
 
-	if ((earlier_bound_day <= temp_time) && (temp_time <= later_bound_day)) {
+	if ((mktime(&earlier_bound_day) <= temp_time) && (temp_time <= mktime(&later_bound_day))) {
 		push_display_eventp_llist(current_event, &current_events);
-	
+
 	}
 }
 
-struct display_event end_current_event(char* late_time) {
+struct display_event* end_current_event(char* late_time) {
 	int temp_time;
 	if (late_time) {
 		temp_time = string_to_time(late_time);
@@ -157,16 +155,13 @@ struct display_event end_current_event(char* late_time) {
 
 	}
 
-	/* output((char*)(intptr_t)current_events->display_event.event.end_time); */
+	current_event.event.end_time = temp_time;
+	event_to_file(current_event.event);
 
-	struct display_event temp = current_event;
-	temp.event.end_time = temp_time;
 	current_event.event.name = NULL;
 	
-	event_to_file(temp.event);
+	return &(current_events->display_event);
 
-	return temp;
-	
 }
 
 /* Lists events from youngest (current_event) to oldest */
@@ -243,14 +238,15 @@ void scroll_current_events(enum rainbow_scroll direction) {
 
 	if (direction == R_UP) {
 		/* add new events */
-		struct charp_llist* temp_1 = get_events_between(earlier_bound_day, earlier_bound_day + 86400);
+		struct charp_llist* temp_1 = get_events_between(earlier_bound_day, tm_add_interval(earlier_bound_day, 0, 0, 1) );
 		new_events = make_current_events(temp_1, member_group_dict, group_color_dict);
 
 		free_charp_llist(temp_1, true);
 
 		if (new_events != NULL) { 
 			struct display_eventp_llist* temp;
-			if (new_events->display_event.event.end_time >= earlier_bound_day - 86400) {
+			struct tm temp_tm = tm_add_interval(earlier_bound_day, 0, 0, -1);
+			if (new_events->display_event.event.end_time >= mktime(&temp_tm)) {
 				temp = new_events;
 				new_events = new_events->next;
 
@@ -272,7 +268,7 @@ void scroll_current_events(enum rainbow_scroll direction) {
 
 		/* remove old events */
 		struct display_eventp_llist* temp_2;
-		while (current_events->display_event.event.start_time >= later_bound_day) {
+		while (current_events->display_event.event.start_time >= mktime(&later_bound_day)) {
 			temp_2 = current_events;
 			current_events = current_events->next;
 
@@ -280,10 +276,9 @@ void scroll_current_events(enum rainbow_scroll direction) {
 			temp_2 = NULL;
 
 		}
-
 	} else {
 		/* add new events */
-		struct charp_llist* temp_1 = get_events_between(later_bound_day - 86400, later_bound_day);
+		struct charp_llist* temp_1 = get_events_between(tm_add_interval(later_bound_day, 0, 0, -1), later_bound_day);
 		new_events = make_current_events(temp_1, member_group_dict, group_color_dict);
 
 		free_charp_llist(temp_1, true);
@@ -298,7 +293,8 @@ void scroll_current_events(enum rainbow_scroll direction) {
 
 			}
 
-			if (temp_2->display_event.event.start_time <= later_bound_day - 86400) {
+			struct tm temp_tm = tm_add_interval(later_bound_day, 0, 0, -1);
+			if (temp_2->display_event.event.start_time <= mktime(&temp_tm)) {
 				temp_3->next = current_events;
 				free(temp_2->display_event.event.name);
 				free(temp_2->display_event.event.note);
@@ -315,7 +311,7 @@ void scroll_current_events(enum rainbow_scroll direction) {
 
 		/* remove old events */
 		struct display_eventp_llist* temp_4 = current_events;
-		while (((temp_4->display_event.event.end_time >= earlier_bound_day) || (temp_4->display_event.event.end_time == -1)) && (temp_4->next != NULL)) {
+		while (((temp_4->display_event.event.end_time >= mktime(&earlier_bound_day)) || (temp_4->display_event.event.end_time == -1)) && (temp_4->next != NULL)) {
 			temp_4 = temp_4->next;
 
 		}
@@ -330,24 +326,29 @@ void scroll_current_events(enum rainbow_scroll direction) {
  * INITALIZER
  */
 void data_init(int rainbow_h) {
-	current_time = time(NULL)-3600*0-60*0;
+	current_time = time(NULL);
 
 	if (rainbow_h == -1) {
-		earlier_bound_day = -1;
-		later_bound_day = -1;
+		time_t temp = 0;
+
+		localtime_r(&temp, &earlier_bound_day);
+		localtime_r(&temp, &later_bound_day);
 
 	} else {
 		/* Initialize rainbow to display to today from (rainbow_h - 3)/2 days ago */
 		int earlier_bound_relative_days = (rainbow_h - 3) - 4;
 		int later_bound_relative_days = 0;
-		
-		struct tm earlier_tm = *time_to_tm_local(current_time -
-			earlier_bound_relative_days*86400);
-		struct tm later_tm = *time_to_tm_local(current_time -
-			later_bound_relative_days*86400);
 
-		earlier_bound_day = start_of_day(&earlier_tm);
-		later_bound_day = end_of_day(&later_tm);
+		time_t temp = current_time;
+
+		struct tm* current_tm = malloc(sizeof(struct tm));
+		localtime_r(&temp, current_tm);
+		earlier_bound_day = start_of_day(tm_add_interval(*current_tm, 0, 0, -1*earlier_bound_relative_days));
+
+		localtime_r(&temp, current_tm);
+		later_bound_day = end_of_day(tm_add_interval(*current_tm, 0, 0, -1*later_bound_relative_days));
+
+		free(current_tm);
 
 	}
 

@@ -3,7 +3,6 @@
 char* cmd_path = NULL;
 char* cmddb_path = NULL;
 char* cmdgroups_path = NULL;
-/* char* current_event_path; */
 
 void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, struct charpcharp_llist** group_hex_dict) {
 	xmlDocPtr doc;
@@ -48,9 +47,28 @@ void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, st
 /*
  * EVENT FUNCTIONS
  */
-struct charp_llist* get_events_between(int earlier_bound, int later_bound) {
+struct charp_llist* get_events_between(struct tm earlier_bound_tm, struct tm later_bound_tm) {
 	struct dirent** namelist;
 	struct charp_llist* ret = NULL;
+
+	int earlier_bound, later_bound;
+
+	if (earlier_bound_tm.tm_year != 1970) {
+		earlier_bound = mktime(&earlier_bound_tm);
+
+	} else {
+		earlier_bound = -1;
+
+	}
+
+	if (later_bound_tm.tm_year != 1970) {
+		later_bound = mktime(&later_bound_tm);
+
+	} else {
+		later_bound = -1;
+
+	}
+
 
 	char* file;
 	char* file_temp;
@@ -69,6 +87,7 @@ struct charp_llist* get_events_between(int earlier_bound, int later_bound) {
 				free(namelist[d]);
 				free(file_tempp);
 				continue;
+
 			}
 
 			start_time = strsep(&file_temp, "-");

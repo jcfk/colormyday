@@ -1,0 +1,6 @@
+# GITIGNORE
+
+src/colormyday
+src/vgcore*
+src/valgrind_out.txt*
+

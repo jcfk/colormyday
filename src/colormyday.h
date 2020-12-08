@@ -13,6 +13,8 @@
 #include <wchar.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <ctype.h>
+#include <regex.h>
 
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -104,7 +106,9 @@ void* tick_init(void* arg);
 
 /* input.c */
 void input_handle(int key);
-void args_handle_curses(char** args);
+void route_args(char** args);
+
+/* script.c */
 void args_handle_script(int argc, char* argv[]);
 
 /* data.c */
@@ -114,8 +118,8 @@ void make_current_event(struct event event);
 void data_init(int rainbow_h);
 int make_color(char* code);
 void make_group_color_dict();
-void begin_event(char* name, char* late_time);
-struct display_event* end_current_event(char* late_time);
+struct display_event* begin_event(char* name, int late_time);
+struct display_event* end_current_event(int late_time);
 void scroll_current_events(enum rainbow_scroll direction);
 void free_globals();
 
@@ -158,7 +162,6 @@ char** split_args(char* string);
 struct tm end_of_day(struct tm tm);
 struct tm start_of_day(struct tm tm);
 char* event_duration(int start_time, int end_time);
-/* struct tm* time_to_tm_local(int time); */
 struct tm tm_add_interval(struct tm tm, int years, int months, int days);
 int string_to_time(char* s);
 

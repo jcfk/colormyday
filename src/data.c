@@ -13,16 +13,29 @@ struct charpint_llist* group_color_dict = NULL;
 /*
  * FREE
  */
-void free_globals() {
-	
-
-}
-
 
 /*
  * COLOR DATA
  */
-int make_color(char* code) {
+
+/*
+ * Function: make_color
+ *
+ * In:
+ *  code: a string containing a hex code (ex: "dd4e13")
+ *
+ * Out:
+ *  Integer representing a new color pair.
+ *
+ * Turns a hex color string into a curses color pair with a background
+ * of the color in question. Foreground is dark if bg is light, and
+ * vice versa.
+ *
+ */
+int 
+make_color(
+char* code
+) {
 	static int no_of_colors = 50;
 
 	char red[3];
@@ -68,24 +81,59 @@ int make_color(char* code) {
 	free(bluehex);
 
 	return no_of_colors;
+
 }
 
-void make_group_color_dict(struct charpint_llist** list) {
+/*
+ * Function: make_group_color_dict
+ *
+ * In:
+ *  list: a pointer to a linked list which will be filled with 
+ *  event groups and their associated colors
+ *
+ * Utilizes global data associating event groups with hex values
+ * to fill a given linked list associating event groups with
+ * corresponding curses color pairs.
+ *
+ */
+void 
+make_group_color_dict(
+	struct charpint_llist** list
+) {
 	struct charpcharp_llist* temp = group_hex_dict;
 	*list = NULL;
 
 	while (temp) {
-		push_charpint_llist(temp->content_1,
+		push_charpint_llist(
+			temp->content_1,
 			make_color(temp->content_2),
-			list);
+			list
+		);
 		temp = temp->next;
+
 	}
 }
 
 /*
  * EVENT DATA
  */
-struct display_event time_to_event(int time) {
+
+/*
+ * Function: time_to_event
+ *
+ * In:
+ *  time: unix epoch time
+ *
+ * Out:
+ *  the display event which contains the time in question, or if none exists, a null display event
+ *
+ * Finds a display event corresponding to an event containing a given time.
+ *
+ */
+struct display_event 
+time_to_event(
+	int time
+) {
 	struct display_eventp_llist* temp = current_events;
 
 	int start_time, end_time;
@@ -115,35 +163,90 @@ struct display_event time_to_event(int time) {
 
 }
 
-void begin_event(char* name, char* late_time) {
+/*
+ * Function: begin_event
+ *
+ * In:
+ *  name: a string containing the name of the new event
+ *  late_time: a timestamp containing the time at which the new
+ *  event should be retroactively begun, or 0
+ *
+ * Out:
+ *  a pointer to the last visible display event, which will be the
+ *  current event if it is visible.
+ *
+ * This function creates a new event using the given data and sets
+ * current_event to it. 
+ *
+ * If it should be visible, it is appended to display_events.
+ * disp_event is called on the last visible event (which will be the
+ * current event if it is visible) in order to intialize its display
+ * position parameters.
+ *
+ */
+struct display_event*
+begin_event(
+	char* name, 
+	int late_time
+) {
 	int temp_time;
-	if (late_time) {
-		temp_time = string_to_time(late_time);
+	if (late_time != 0) {
+		temp_time = late_time;
 
 	} else {
 		temp_time = current_time;
 
 	}
 
-	struct event temp = (struct event) { .start_time = temp_time,
-						.end_time = -1,
-						.name = name,
-						.note = "-1"};
+	struct event temp = (struct event) {
+		.start_time = temp_time,
+		.end_time = -1,
+		.name = name,
+		.note = "-1"
+
+	};
 
 	event_to_file(temp);
 
 	make_current_event(temp);
 
-	if ((mktime(&earlier_bound_day) <= temp_time) && (temp_time <= mktime(&later_bound_day))) {
+	if (mktime(&earlier_bound_day) <= temp_time && temp_time <= mktime(&later_bound_day)) {
 		push_display_eventp_llist(current_event, &current_events);
 
 	}
+
+	debug("%s", current_events->display_event.event.name);
+
+	return &(current_events->display_event);
+
 }
 
-struct display_event* end_current_event(char* late_time) {
+/*
+ * Function: end_current_event
+ *
+ * In:
+ *  late_time: an integer representing the unix timestamp at which 
+ *  the current event should be retroactively ended, or 0
+ *
+ * Out:
+ *  a pointer to the display event of the last visible event. If 
+ *  the current event is visible this will be the current event's 
+ *  display event.
+ *
+ * This function ends current_event at the given time. 
+ *
+ * If the current event is visible, the last visible event is 
+ * modified as well. disp_event is called on the last visible event
+ * in order to modify its display position parameters.
+ *
+ */
+struct display_event* 
+end_current_event(
+	int late_time
+) {
 	int temp_time;
-	if (late_time) {
-		temp_time = string_to_time(late_time);
+	if (late_time != 0) {
+		temp_time = late_time;
 
 	} else {
 		temp_time = current_time;
@@ -159,16 +262,20 @@ struct display_event* end_current_event(char* late_time) {
 	event_to_file(current_event.event);
 
 	current_event.event.name = NULL;
-	
+
+	disp_event(&(current_events->display_event), false);
+
 	return &(current_events->display_event);
 
 }
 
 /* Lists events from youngest (current_event) to oldest */
-struct display_eventp_llist* make_current_events(struct charp_llist* list,
+struct display_eventp_llist* 
+make_current_events(
+	struct charp_llist* list,
 	struct charpcharp_llist* member_group_dict,
-	struct charpint_llist* group_color_dict) 
-	{
+	struct charpint_llist* group_color_dict
+) {
 
 	struct charp_llist* temp = list;
 	struct display_eventp_llist* current_events_temp = NULL;
@@ -205,8 +312,22 @@ struct display_eventp_llist* make_current_events(struct charp_llist* list,
 
 }
 
-void make_current_event(struct event event) {
+/*
+ * Function: make_current_event
+ *
+ * In:
+ *  event: an event containing data to be made into the current event
+ *
+ * This function initializes a new current_event global using given
+ * data.
+ *
+ */
+void 
+make_current_event(
+	struct event event
+) {
 	int c = 1;
+
 	char* group;
 	group = charpcharp_dict(member_group_dict, event.name);
 	if (group) {
@@ -215,14 +336,19 @@ void make_current_event(struct event event) {
 	}
 
 	struct display_event temp_de;
-	temp_de.event = (struct event) { .start_time = event.start_time,
-					.end_time = event.end_time,
-					.name = event.name,
-					.note = event.note };
+	temp_de.event = (struct event) {
+		.start_time = event.start_time,
+		.end_time = event.end_time,
+		.name = event.name,
+		.note = event.note
+
+	};
+
 	temp_de.group = group;
 	temp_de.color = c;
 
 	current_event = temp_de;
+
 }
 
 void reload_current_events() {
@@ -358,4 +484,5 @@ void data_init(int rainbow_h) {
 
 	/* Load event globals */
 	reload_current_events();
+
 }

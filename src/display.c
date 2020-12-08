@@ -53,16 +53,20 @@ void error(char* string, ...) {
 
 	va_end(vargs);
 
+	char* temp_err;
+	asprintf(&temp_err, "ERR: %s", temp);
+
 	werase(controls);
 	
 	wattron(controls, COLOR_PAIR(4));
 	wattron(controls, A_BOLD);
-	mvwprintw(controls, 0, 0, temp);
+	mvwprintw(controls, 0, 0, temp_err);
 	wattroff(controls, A_BOLD);
 	wattroff(controls, COLOR_PAIR(4));
 
 	wrefresh(controls);
 
+	free(temp_err);
 	free(temp);
 
 }
@@ -541,10 +545,6 @@ struct display_event cursor_to_event(int cursor_y, int cursor_x) {
 	struct display_eventp_llist* temp = current_events;
 
 	int cursor_dist = cursor_y*color_w + cursor_x;
-	/* char* d; */
-	/* asprintf(&d, "%d", cursor_dist); */
-	/* debug(d); */
-	/* free(d); */
 
 	int start;
 	int end;
@@ -711,22 +711,7 @@ void command() {
 	}
 
 	char** args = split_args(request);
-
-	/* 
-	int i = 0;
-	while (args[i + 1]) {
-		i = i + 1;
-
-	}
-
-	char* n;
-	asprintf(&n, "%d", i);
-	mvwprintw(top_data, 1, 20, n);
-	wrefresh(top_data);
-	free(n);
-	*/
-
-	args_handle_curses(args);
+	route_args(args);
 
 	free(args);
 	free(request);
@@ -930,9 +915,8 @@ void cursor_tick() {
 
 	wrefresh(rainbow);
 
-	disp_event(&cursor_event, false);
-
 	cursor_event = cursor_to_event(cursor[0], cursor[1]);
+	disp_event(&cursor_event, false);
 	/* disp_event(cursor_event, false); */
 
 	display_note(current_event);
@@ -952,12 +936,6 @@ int cursor_x_pos(int time) {
 void display_tick() {
 	time_cursor[0] = end_y_bound(current_time);
 	time_cursor[1] = end_x_bound(current_time);
-
-	/* if (time_cursor[1] == -1) { */
-	/* 	time_cursor[0] = time_cursor[0] - 1; */
-	/* 	time_cursor[1] = color_w - 1; */
-
-	/* } */
 
 	if (cursor_ticking && (time_cursor[0] > color_h - 1)) {
 		enum rainbow_scroll direction = R_DOWN;

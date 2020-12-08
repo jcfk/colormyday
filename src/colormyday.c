@@ -1,17 +1,32 @@
 #include "colormyday.h"
 
-
 short color10[3], color11[3];
 pthread_mutex_t display_access, variable_access;
 bool thread_exit;
 
-void save_default_colors() {
+/*
+ * Function: save_default_colors
+ * 
+ * Saves terminal color values for colors 10 and 11.
+ *
+ */
+void 
+save_default_colors() 
+{
 	color_content(10, &color10[0], &color10[1], &color10[2]);
 	color_content(11, &color11[0], &color11[1], &color11[2]);
 
 }
 
-void curses_init() {
+/*
+ * Function: curses_init
+ *
+ * Initializes curses and new colors and pairs.
+ *
+ */
+void 
+curses_init() 
+{
 	initscr();
 	cbreak();
 	noecho();
@@ -45,7 +60,15 @@ void curses_init() {
 
 }
 
-void exit_colormyday() {
+/*
+ * Function: exit_colormyday
+ *
+ * Resets terminal colors and exits curses.
+ *
+ */
+void
+exit_colormyday()
+{
 	init_color(10, color10[0], color10[1], color10[2]);
 	init_color(11, color11[0], color11[1], color11[2]);
 
@@ -59,15 +82,38 @@ void exit_colormyday() {
 	endwin();
 
 	exit(0);
+
 }
 
-void resize_colormyday() {
+/*
+ * Function: resize_colormyday
+ *
+ * Effectively restarts the app.
+ *
+ */
+void
+resize_colormyday()
+{
 	int rainbow_h = windows_init();
 	data_init(rainbow_h);
 	display_init();
+
 }
 
-int main(int argc, char* argv[]) {
+/*
+ * Function: main
+ *
+ * In:
+ *  argc
+ *  argv
+ *
+ * If using curses, initializes screen and data and starts ticking, 
+ * otherwise executes in scripting mode.
+ *
+ */
+int
+main(int argc, char* argv[])
+{
 	setlocale(LC_ALL, "");
 
 	/* input/output */
@@ -86,7 +132,6 @@ int main(int argc, char* argv[]) {
 		display_init();
 
 		/* tick thread */ 
-		/* thread_exit = false; */
 		pthread_mutex_init(&display_access, NULL);
 
 		pthread_mutex_init(&variable_access, NULL);
@@ -116,4 +161,5 @@ int main(int argc, char* argv[]) {
 	}
 
 	return(0);
+
 }

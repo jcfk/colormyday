@@ -3,31 +3,70 @@
 /*
  * CURSES MODE
  */
-void end_begin_curses(char* name, char* late_time) {
-	/* End old event & begin new event */
+
+/* 
+ * Function: begin_handle
+ *
+ * In:
+ *  name: string containing name of new event
+ *  late_time: string containing timestamp of when the new event began, or null
+ *
+ * This function is for use in curses mode. It sets the end of the 
+ * current event (if there is one) to time T, and creates and sets 
+ * the beginning of a new event to time T. Time T is the late time 
+ * if one is given, or else it is the current time.
+ *
+ */
+char*
+begin_handle(
+	char* name, 
+	char* late_time
+) {
 	if (strcmp(name, "") == 0) {
-		return;
+		return("no event name given");
 
 	}
 
-	/* If current event exists */
+	int late_time_seconds = 0;
+	if (late_time) {
+		late_time_seconds = string_to_time(late_time);
+
+		if (late_time_seconds == -1) {
+			return("invalid --late time");
+
+		}
+
+	}
+
+	/* If current event exists end current_event */
 	if (current_event.event.name != NULL) {
 		disp_event(&current_event, true);
-		cursor_event = *end_current_event(late_time);
-		disp_event(&cursor_event, false);
+		struct display_event* temp = end_current_event(late_time_seconds);
+		/* disp_event(temp, false); */
 
 	}
 
 	char* temp_name;
 	asprintf(&temp_name, "%s", name);
-	begin_event(temp_name, late_time);
+	struct display_event* temp = begin_event(temp_name, late_time_seconds);
+	/* disp_event(temp, false); */
 
 	display_tick();
 
+	return(NULL);
+
 }
 
-void end_event_curses() {
-	end_current_event(NULL);
+/*
+ * Function: end_event
+ *
+ * This function ends the current event.
+ *
+ */
+void
+end_event(
+) {
+	end_current_event(0);
 
 	reload_current_events();
 	display_events();
@@ -36,12 +75,27 @@ void end_event_curses() {
 
 }
 
-void edit_selection() {
+/*
+ * Function: edit_selection
+ *
+ * This function executes a shell command which launches an editor 
+ * on the path of the cursor event. Upon exit, all visible events
+ * are reloaded and rerendered.
+ *
+ */
+void 
+edit_selection(
+) {
 	endwin();
 
 	char* command = NULL;
 	asprintf(&command, "vi %s", cursor_event_path());
-	system(command);
+	int err = system(command);
+
+	if (err == -1) {
+		error("%s", "error opening file");
+
+	}
 
 	reload_current_events();
 	display_events();
@@ -51,7 +105,19 @@ void edit_selection() {
 
 }
 
-void begin_handle(char** args) {
+/*
+ * Function: args_begin
+ *
+ * In:
+ *  args: a split-on-" " list of command arguments
+ *
+ * This function parses arguments to a :begin command.
+ *
+ */
+char*
+args_begin(
+	char** args
+) {
 	char* name;
 	char* late_time = NULL;
 
@@ -79,34 +145,77 @@ void begin_handle(char** args) {
 
 	}
 
-	end_begin_curses(name, late_time);
+	char* err = begin_handle(name, late_time);
+
+	if (err) {
+		return(err);
+
+	}
+
+	return(NULL);
 
 }
 
-/* fix this */
-void args_handle_curses(char** args) {
-	char* arg;
-	arg = args[0];
+/*
+ * Function: route_args
+ *
+ * In:
+ *  args: a split-on-" " list of command arguments
+ *
+ * This function sends the given args to the corresponding command's
+ * argument parser, or calls a function directly if the command is
+ * simple enough.
+ *
+ */
+void 
+route_args(
+	char** args
+) {
+	char* cmd;
+	cmd = args[0];
 
-	if ((strcmp(arg, "begin") == 0) ||
-	    (strcmp(arg, "Begin") == 0)) {
-		begin_handle(args);
+	for(int i = 0; cmd[i]; i++) {
+		cmd[i] = tolower(cmd[i]);
 
-	} else if ((strcmp(arg, "end") == 0) ||
-		   (strcmp(arg, "End") == 0)) {
-		end_event_curses();
+	}
 
-	} else if ((strcmp(arg, "edit") == 0) ||
-		   (strcmp(arg, "Edit") == 0)) {
+	char* err = NULL;
+	if (strcmp(cmd, "begin") == 0) {
+		err = args_begin(args);
+
+	} else if (strcmp(cmd, "end") == 0) {
+		/* err = */ 
+		end_event();
+
+	} else if (strcmp(cmd, "edit") == 0) {
+		/* err = */ 
 		edit_selection();
 
 	} else {
-		error("%s", "ERR: unknown command");
+		error("%s", "unknown command");
+
+	}
+
+	if (err) {
+		error("%s", err);
 
 	}
 }
 
-void input_handle(int key) {
+/*
+ * Function: input_handle
+ *
+ * In:
+ *  key: an integer corresponding to the key pressed
+ *
+ * This function calls the function corresponding to the keypress.
+ * It reserves thread access to global data during execution.
+ *
+ */
+void 
+input_handle(
+	int key
+) {
 	pthread_mutex_lock(&variable_access);
 	pthread_mutex_lock(&display_access);
 		
@@ -172,55 +281,4 @@ void input_handle(int key) {
 
 }
 
-/*
- * SCRIPT MODE
- */
-void end_begin_script(char* name) {
-	if (current_event.event.name != NULL) {
-		struct display_event last = *end_current_event(NULL);
-		begin_event(name, NULL);
-		printf("Begun event: %s (ended %s)\n", name, last.event.name);
-
-	} else {
-		begin_event(name, NULL);
-		printf("Begun event: %s\n", name);
-
-	}
-
-}
-
-void end_event_script() {
-	if (current_event.event.name != NULL) {
-		struct display_event last = *end_current_event(NULL);
-		char* t = event_duration(last.event.start_time, last.event.end_time);
-		printf("Ended event: %s (duration %s)\n", last.event.name, t);
-		
-	} else {
-		printf("No current event to end.\n");
-
-	}
-}
-
-void args_handle_script(int argc, char* argv[]) {
-	char* arg;
-	int i = 1;
-	while(i < argc) {
-		arg = argv[i];
-
-		i += 1;
-		if (strcmp(arg, "begin") == 0) {
-			if (i == argc) {
-				printf("ERR: Please enter the name of the event you'd like to begin. For example:\n\n\t$ colormyday begin Exercise\n\t$ colormyday begin \"Side Project\"\n\n");
-
-			} else {
-				end_begin_script(argv[i]);
-
-			}
-
-		} else if (strcmp(arg, "end") == 0) {
-			end_event_script();
-
-		}
-	}
-}
 

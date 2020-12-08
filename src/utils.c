@@ -296,6 +296,21 @@ struct tm tm_add_interval(struct tm tm, int years, int months, int days) {
 }
 
 int string_to_time(char* s) {
+	regex_t stamp_reg, duration_reg;
+	regcomp(&stamp_reg, "[0-9]*-[0-9]*-[0-9]*-[0-9]*-[0-9]*", 0);
+	regcomp(&duration_reg, "[0-9]*h|[0-9]*m|[0-9]*h[0-9]*m", 0);
+
+	int stamp_reg_match = regexec(&stamp_reg, s, 0, NULL, 0);
+	int duration_reg_match = regexec(&duration_reg, s, 0, NULL, 0);
+
+	regfree(&stamp_reg);
+	regfree(&duration_reg);
+
+	if (stamp_reg_match && duration_reg_match) {
+		return(-1);
+
+	}
+
 	char* temp_s = strdup(s);
 
 	int data[5];

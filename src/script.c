@@ -3,7 +3,10 @@
 /*
  * SCRIPT MODE
  */
-void end_begin_script(char* name) {
+void 
+end_begin_script(
+	char* name
+) {
 	if (current_event.event.name != NULL) {
 		struct display_event last = *end_current_event(0);
 		begin_event(name, 0);
@@ -17,7 +20,10 @@ void end_begin_script(char* name) {
 
 }
 
-void end_event_script() {
+void 
+end_event_script(
+	void
+) {
 	if (current_event.event.name != NULL) {
 		struct display_event last = *end_current_event(0);
 		char* t = event_duration(last.event.start_time, last.event.end_time);
@@ -29,7 +35,11 @@ void end_event_script() {
 	}
 }
 
-void args_handle_script(int argc, char* argv[]) {
+void 
+args_handle_script(
+	int argc, 
+	char* argv[]
+) {
 	char* arg;
 	int i = 1;
 	while(i < argc) {

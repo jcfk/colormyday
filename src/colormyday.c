@@ -11,8 +11,9 @@ bool thread_exit;
  *
  */
 void 
-save_default_colors() 
-{
+save_default_colors(
+void
+) {
 	color_content(10, &color10[0], &color10[1], &color10[2]);
 	color_content(11, &color11[0], &color11[1], &color11[2]);
 
@@ -25,8 +26,9 @@ save_default_colors()
  *
  */
 void 
-curses_init() 
-{
+curses_init(
+void
+) {
 	initscr();
 	cbreak();
 	noecho();
@@ -67,8 +69,11 @@ curses_init()
  *
  */
 void
-exit_colormyday()
-{
+exit_colormyday(
+void
+) {
+	free_data();
+
 	init_color(10, color10[0], color10[1], color10[2]);
 	init_color(11, color11[0], color11[1], color11[2]);
 
@@ -92,8 +97,9 @@ exit_colormyday()
  *
  */
 void
-resize_colormyday()
-{
+resize_colormyday(
+void
+) {
 	int rainbow_h = windows_init();
 	data_init(rainbow_h);
 	display_init();
@@ -112,8 +118,10 @@ resize_colormyday()
  *
  */
 int
-main(int argc, char* argv[])
-{
+main(
+	int argc, 
+	char* argv[]
+) {
 	setlocale(LC_ALL, "");
 
 	/* input/output */
@@ -122,7 +130,7 @@ main(int argc, char* argv[])
 	/* args */
 	if (argc == 1) { /* display normally */
 		/* configure window */
-		curses_init(color10, color11);
+		curses_init();
 		int rainbow_h = windows_init();
 
 		/* data */

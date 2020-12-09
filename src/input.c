@@ -41,14 +41,14 @@ begin_handle(
 	/* If current event exists end current_event */
 	if (current_event.event.name != NULL) {
 		disp_event(&current_event, true);
-		struct display_event* temp = end_current_event(late_time_seconds);
+		end_current_event(late_time_seconds);
 		/* disp_event(temp, false); */
 
 	}
 
 	char* temp_name;
 	asprintf(&temp_name, "%s", name);
-	struct display_event* temp = begin_event(temp_name, late_time_seconds);
+	begin_event(temp_name, late_time_seconds);
 	/* disp_event(temp, false); */
 
 	display_tick();
@@ -65,6 +65,7 @@ begin_handle(
  */
 void
 end_event(
+	void
 ) {
 	end_current_event(0);
 
@@ -85,6 +86,7 @@ end_event(
  */
 void 
 edit_selection(
+	void
 ) {
 	endwin();
 

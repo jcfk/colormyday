@@ -1,6 +1,9 @@
 #include "colormyday.h"
 
-void tick() {
+void 
+tick(
+	void
+) {
 	for(;;) {
 		sleep(1);
 
@@ -16,7 +19,10 @@ void tick() {
 	}
 }
 
-void* tick_init(void* arg) {
+void* 
+tick_init(
+	void* arg
+) {
 	(void)arg;
 
 	tick();

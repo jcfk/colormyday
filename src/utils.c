@@ -61,6 +61,7 @@ char** split_args(char* string) {
 /*
  * DICTIONARY TOOLS
  */
+
 char* charpcharp_dict(struct charpcharp_llist* list, char* c) {
 	char* ret = NULL;
 	struct charpcharp_llist* temp = list;	
@@ -77,10 +78,10 @@ char* charpcharp_dict(struct charpcharp_llist* list, char* c) {
 }
 
 int charpint_dict(struct charpint_llist* list, char* c) {
-	int ret;
+	int ret = 0;
 	struct charpint_llist* temp = list;
 
-	while(temp) {
+	while (temp) {
 		if (strcmp(temp->c_content, c) == 0) {
 			ret = temp->i_content;
 			break;
@@ -94,6 +95,7 @@ int charpint_dict(struct charpint_llist* list, char* c) {
 /*
  * LINKED LIST TOOLS PUSH
  */
+
 void push_charpcharp_llist(char* c_1, char* c_2, struct charpcharp_llist** list) {
 	struct charpcharp_llist* ret;
 	ret = malloc(sizeof(struct charpcharp_llist));
@@ -132,27 +134,73 @@ void push_eventp_llist(struct event event, struct eventp_llist** list) {
 	*list = ret;
 }
 
-void push_display_eventp_llist(struct display_event display_event, struct display_eventp_llist** list) {
+void 
+push_display_eventp_llist(
+	struct display_event display_event, 
+	struct display_eventp_llist** list
+) {
 	struct display_eventp_llist* ret;
 	ret = malloc(sizeof(struct display_eventp_llist));
 	ret->display_event = display_event;
 	ret->next = *list;
 
 	*list = ret;
+
 }
 
 /*
  * LINKED LIST TOOLS FREE
  */
-/* void free_charpcharp_llist(struct charpcharp_llist* list) { */
-	
 
-/* } */
+void 
+free_charpcharp_llist(
+	struct charpcharp_llist* list,
+	bool malloced_1,
+	bool malloced_2
+) {
+	struct charpcharp_llist* temp = list;
+	struct charpcharp_llist* tempp;
 
-/* void free_charpint_llist(struct charpint_llist* list) { */
+	while (temp) {
+		if (malloced_1) {
+			free(temp->content_1);
 
+		}
 
-/* } */
+		if (malloced_2) {
+			free(temp->content_2);
+
+		}
+
+		tempp = temp;
+		temp = temp->next;
+
+		free(tempp);
+
+	}
+}
+
+void 
+free_charpint_llist(
+	struct charpint_llist* list,
+	bool malloced
+) {
+	struct charpint_llist* temp = list;
+	struct charpint_llist* tempp;
+
+	while (temp) {
+		if (malloced) {
+			free(temp->c_content);
+
+		}
+
+		tempp = temp;
+		temp = temp->next;
+
+		free(tempp);
+
+	}
+}
 
 /* char*s in this llist are either all malloc'ed or not */
 void free_charp_llist(struct charp_llist* list, bool malloced) {
@@ -178,7 +226,10 @@ void free_charp_llist(struct charp_llist* list, bool malloced) {
 
 /* } */
 
-void free_display_eventp_llist(struct display_eventp_llist* list) {
+void 
+free_display_eventp_llist(
+	struct display_eventp_llist* list
+) {
 	struct display_eventp_llist* temp = list;
 	struct display_eventp_llist* tempp;
 

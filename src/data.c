@@ -14,6 +14,16 @@ struct charpint_llist* group_color_dict = NULL;
  * FREE
  */
 
+void 
+free_data(
+) {	
+	free_display_eventp_llist(current_events);
+	free_charpcharp_llist(member_group_dict, false, false);
+	free_charpcharp_llist(group_hex_dict, false, false);
+	free_charpint_llist(group_color_dict, false);
+
+}
+
 /*
  * COLOR DATA
  */
@@ -198,11 +208,13 @@ begin_event(
 
 	}
 
+	char* malloc_note = malloc(sizeof(char) * 3);
+	strcpy(malloc_note, "-1");
 	struct event temp = (struct event) {
 		.start_time = temp_time,
 		.end_time = -1,
 		.name = name,
-		.note = "-1"
+		.note = malloc_note
 
 	};
 
@@ -214,8 +226,6 @@ begin_event(
 		push_display_eventp_llist(current_event, &current_events);
 
 	}
-
-	debug("%s", current_events->display_event.event.name);
 
 	return &(current_events->display_event);
 
@@ -269,12 +279,19 @@ end_current_event(
 
 }
 
+/* 
+ * Function: make_current_events
+ *
+ * In:
+ *  list: a list of 
+ *
+ */
 /* Lists events from youngest (current_event) to oldest */
 struct display_eventp_llist* 
 make_current_events(
 	struct charp_llist* list,
-	struct charpcharp_llist* member_group_dict,
-	struct charpint_llist* group_color_dict
+	struct charpcharp_llist* mg_dict,
+	struct charpint_llist* gc_dict
 ) {
 
 	struct charp_llist* temp = list;
@@ -283,15 +300,15 @@ make_current_events(
 	struct event temp_event;
 	struct display_event temp_display_event;
 
-	while(temp) {
+	while (temp) {
 		temp_event = file_to_event(temp->content);
 		temp_display_event.event = temp_event;
 
 		int c = 1;
 		char* group = NULL;
-		group = charpcharp_dict(member_group_dict, temp_event.name);
+		group = charpcharp_dict(mg_dict, temp_event.name);
 		if (group) {
-			c = charpint_dict(group_color_dict, group);
+			c = charpint_dict(gc_dict, group);
 
 		}
 
@@ -351,7 +368,17 @@ make_current_event(
 
 }
 
-void reload_current_events() {
+/*
+ * Function: reload_current_events
+ *
+ * This function 
+ *
+ */
+void 
+reload_current_events(
+) {
+	free_display_eventp_llist(current_events);
+
 	struct charp_llist* events = get_events_between(earlier_bound_day, later_bound_day);
 	current_events = make_current_events(events, member_group_dict, group_color_dict);
 
@@ -382,13 +409,13 @@ void scroll_current_events(enum rainbow_scroll direction) {
 
 			}
 
-			struct display_eventp_llist* temp_1 = current_events;
-			while (temp_1->next) {
-				temp_1 = temp_1->next;
+			struct display_eventp_llist* temp_3 = current_events;
+			while (temp_3->next) {
+				temp_3 = temp_3->next;
 
 			}
 
-			temp_1->next = new_events;
+			temp_3->next = new_events;
 
 		}
 

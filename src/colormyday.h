@@ -98,8 +98,8 @@ extern bool cursor_ticking;
 extern bool thread_exit;
 
 /* colormyday.c */
-void exit_colormyday();
-void resize_colormyday();
+void exit_colormyday(void);
+void resize_colormyday(void);
 
 /* tick.c */
 void* tick_init(void* arg);
@@ -112,16 +112,16 @@ void route_args(char** args);
 void args_handle_script(int argc, char* argv[]);
 
 /* data.c */
-void reload_current_events();
+void reload_current_events(void);
 struct display_event time_to_event(int time);
 void make_current_event(struct event event);
 void data_init(int rainbow_h);
 int make_color(char* code);
-void make_group_color_dict();
+void make_group_color_dict(struct charpint_llist** list);
 struct display_event* begin_event(char* name, int late_time);
 struct display_event* end_current_event(int late_time);
 void scroll_current_events(enum rainbow_scroll direction);
-void free_globals();
+void free_data(void);
 
 /* display.c */
 extern WINDOW* top_data;
@@ -132,30 +132,30 @@ extern WINDOW* controls;
 void debug(char* string, ...);
 void error(char* string, ...);
 
-void display_events();
+void display_events(void);
 void cursor_move(enum cursor_movement movement);
-void display_tick();
-char* get_command();
-void command();
+void display_tick(void);
+char* get_command(void);
+void command(void);
 void display_duration(struct display_event display_event);
 void disp_event(struct display_event* display_event, bool clear);
 void display_end_event(struct display_event display_event);
-void cursor_init();
-int windows_init();
-void display_init();
+void cursor_init(void);
+int windows_init(void);
+void display_init(void);
 void display_note(struct display_event display_event);
 
 void output(char* message);
 
 /* io.c */
-char* cursor_event_path();
+char* cursor_event_path(void);
 void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, struct charpcharp_llist** group_hex_dict);
-void make_dicts();
-void io_init();
+void make_dicts(void);
+void io_init(void);
 void event_to_file(struct event event);
 struct event file_to_event(char* file);
 struct charp_llist* get_events_between(struct tm earlier_bound_tm, struct tm later_bound_tm);
-struct charint_llist* get_color_dict();
+struct charint_llist* get_color_dict(void);
 
 /* utils.c */
 char** split_args(char* string);
@@ -172,6 +172,9 @@ void push_eventp_llist(struct event event, struct eventp_llist** list);
 void push_display_eventp_llist(struct display_event display_event, struct display_eventp_llist** list);
 
 void free_charp_llist(struct charp_llist* list, bool malloced);
+void free_charpcharp_llist(struct charpcharp_llist* list, bool malloced_1, bool malloced_2);
+void free_charpint_llist(struct charpint_llist* list, bool malloced);
+void free_eventp_llkist(struct eventp_llist* list);
 void free_display_eventp_llist(struct display_eventp_llist* list);
 
 int charpint_dict(struct charpint_llist* list, char* c);

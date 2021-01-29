@@ -26,10 +26,11 @@ Version 0.9
 
 ### Installation
 
-In `src`:
+If installing from this repo:
 
-	$ make
-	$ sudo make install
+	$ ./autogen.sh
+	$ ./configure
+	$ make && sudo make install
 
 
 ### How-to

@@ -24,8 +24,9 @@ AC_SUBST(xmlcflags, "$(xml2-config --cflags)")
 
 # library check
 
+# fix this
 AC_CHECK_LIB(ncurses, initscr, [
-		LIBS="${LIBS} -lncursesw"
+		LIBS="${LIBS} -lncurses"
 
 	], [
 		AC_MSG_ERROR([ncurses is required to build colormyday])

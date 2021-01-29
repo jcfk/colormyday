@@ -4,7 +4,7 @@ Version 0.9
 
 ### About
 
-`colormyday` is the colorful life activity visualizer for the terminal. Record your activities in realtime to gain graphical insight into your lifestyle & habits!
+`colormyday` is the colorful life activity visualizer for the terminal. Record your activities in real-time to gain graphical insight into your lifestyle & habits.
 
 
 ### Features
@@ -19,14 +19,12 @@ Version 0.9
 	$ colormyday end
 	```
 
-#### Upcoming Features
-* **future events**
-* ...
-
 
 ### Installation
 
-If installing from this repo:
+Right now, colormyday only works in arch. I'll fix it!
+
+If installing from this repo, you need the autotools:
 
 	$ ./autogen.sh
 	$ ./configure
@@ -44,4 +42,9 @@ If installing from this repo:
 ### Gallery
 
 SOON
+
+
+### To-do
+
+
 

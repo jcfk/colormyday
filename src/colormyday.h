@@ -26,6 +26,8 @@
 #define CMD_DIRECTORY_NAME ".colormyday"
 #define CMD_DB_NAME "data"
 
+#define CMD_VERSION "COLORMYDAY v" VERSION
+
 /* structs */
 struct event {
 	int start_time, end_time;

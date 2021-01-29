@@ -1,5 +1,7 @@
 ![title](colormyday.png)
 
+Version 0.9
+
 ### About
 
 `colormyday` is the colorful life activity visualizer for the terminal. Record your activities in realtime to gain graphical insight into your lifestyle & habits!

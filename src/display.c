@@ -284,7 +284,7 @@ void display_duration(struct display_event display_event) {
 	
 	werase(top_data);
 	box(top_data, 0, 0);
-	mvwprintw(top_data, 1, 1, "COLORMYDAY");
+	mvwprintw(top_data, 1, 1, CMD_VERSION);
 	wattron(top_data, COLOR_PAIR(c));
 	wattron(top_data, A_BOLD);
 	mvwprintw(top_data, 1, (top_data_w - (int) strlen(temp))/2, temp);

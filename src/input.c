@@ -17,7 +17,7 @@
  * if one is given, or else it is the current time.
  *
  */
-char*
+static char*
 begin_handle(
 	char* name, 
 	char* late_time
@@ -35,21 +35,18 @@ begin_handle(
 			return("invalid --late time");
 
 		}
-
 	}
 
-	/* If current event exists end current_event */
+	/* If current event exists, end current_event */
 	if (current_event.event.name != NULL) {
 		disp_event(&current_event, true);
 		end_current_event(late_time_seconds);
-		/* disp_event(temp, false); */
 
 	}
 
 	char* temp_name;
 	asprintf(&temp_name, "%s", name);
 	begin_event(temp_name, late_time_seconds);
-	/* disp_event(temp, false); */
 
 	display_tick();
 
@@ -58,13 +55,13 @@ begin_handle(
 }
 
 /*
- * Function: end_event
+ * Function: end_handle
  *
  * This function ends the current event.
  *
  */
-void
-end_event(
+static void
+end_handle(
 	void
 ) {
 	end_current_event(0);
@@ -84,8 +81,8 @@ end_event(
  * are reloaded and rerendered.
  *
  */
-void 
-edit_selection(
+static void 
+edit_handle(
 	void
 ) {
 	endwin();
@@ -111,12 +108,12 @@ edit_selection(
  * Function: args_begin
  *
  * In:
- *  args: a split-on-" " list of command arguments
+ *  args: a split-on-spaces (" ") list of command arguments
  *
  * This function parses arguments to a :begin command.
  *
  */
-char*
+static char*
 args_begin(
 	char** args
 ) {
@@ -187,11 +184,11 @@ route_args(
 
 	} else if (strcmp(cmd, "end") == 0) {
 		/* err = */ 
-		end_event();
+		end_handle();
 
 	} else if (strcmp(cmd, "edit") == 0) {
 		/* err = */ 
-		edit_selection();
+		edit_handle();
 
 	} else {
 		error("%s", "unknown command");

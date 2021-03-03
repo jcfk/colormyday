@@ -10,9 +10,9 @@ bool thread_exit;
  * Saves terminal color values for colors 10 and 11.
  *
  */
-void 
+static void 
 save_default_colors(
-void
+	void
 ) {
 	color_content(10, &color10[0], &color10[1], &color10[2]);
 	color_content(11, &color11[0], &color11[1], &color11[2]);
@@ -25,9 +25,9 @@ void
  * Initializes curses and new colors and pairs.
  *
  */
-void 
+static void 
 curses_init(
-void
+	void
 ) {
 	initscr();
 	cbreak();
@@ -60,6 +60,9 @@ void
 	init_pair(1, 10, 11);
 	init_pair(2, 11, 10);
 
+	/* Eliminate delay after hitting esc */
+	set_escdelay(10);
+
 }
 
 /*
@@ -70,7 +73,7 @@ void
  */
 void
 exit_colormyday(
-void
+	void
 ) {
 	free_data();
 
@@ -79,8 +82,8 @@ void
 
 	thread_exit = true;
 
-	pthread_mutex_unlock(&display_access);
-	pthread_mutex_unlock(&variable_access);
+	/* pthread_mutex_unlock(&display_access); */
+	/* pthread_mutex_unlock(&variable_access); */
 
 	reset_color_pairs();
 
@@ -98,7 +101,7 @@ void
  */
 void
 resize_colormyday(
-void
+	void
 ) {
 	int rainbow_h = windows_init();
 	data_init(rainbow_h);
@@ -124,49 +127,69 @@ main(
 ) {
 	setlocale(LC_ALL, "");
 
-	/* input/output */
-	io_init();
+	/* argument handling: turn this into its own function which 
+	 * takes pointers to optargs */
+	char* directory = NULL;
+	int flag;
+	while (true) {
+		static struct option long_options[] = {
+			{"directory", required_argument, 0, 1},
+			{0, 0, 0, 0}
 
-	/* args */
-	if (argc == 1) { /* display normally */
-		/* configure window */
-		curses_init();
-		int rainbow_h = windows_init();
+		};
 
-		/* data */
-		data_init(rainbow_h);
+		int option_index = 0;
 
-		/* display */
-		display_init();
+		flag = getopt_long(argc, argv, "", long_options, &option_index);
 
-		/* tick thread */ 
-		pthread_mutex_init(&display_access, NULL);
+		if (flag == -1) {
+			break;
 
-		pthread_mutex_init(&variable_access, NULL);
-
-		pthread_attr_t attr;
-		pthread_attr_init(&attr);
-		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-
-		pthread_t tick_thread;
-		pthread_create(&tick_thread, &attr, tick_init, NULL);
-
-		/* keyboard input */
-		int key;
-		for(;;) {
-			key = wgetch(rainbow);
-
-			input_handle(key);
 		}
 
-		endwin();
+		switch (flag) {
+			case 1:
+				directory = optarg;
+				break;
 
-	} else { /* execute silently and exit */
-		data_init(-1);
+		}
+	}
 
-		args_handle_script(argc, argv);
+	/* input/output */
+	io_init(directory);
+
+	/* configure window */
+	curses_init();
+	int rainbow_h = windows_init();
+
+	/* data */
+	data_init(rainbow_h);
+
+	/* display */
+	display_init();
+
+	/* tick thread */ 
+	pthread_mutex_init(&display_access, NULL);
+
+	pthread_mutex_init(&variable_access, NULL);
+
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+
+	pthread_t tick_thread;
+	pthread_create(&tick_thread, &attr, tick_init, NULL);
+
+	/* keyboard input */
+	int key;
+	for(;;) {
+		key = wgetch(rainbow);
+
+		input_handle(key);
 
 	}
+
+	endwin();
 
 	return(0);
 

@@ -207,12 +207,18 @@ char* cursor_event_path() {
 /*
  * INITIALIZERS
  */
-void io_init() {
-	char* home_path = getenv("HOME");
-
+void io_init(char* path) {
 	/* check/create db directory in home */	
-	asprintf(&cmd_path, "%s%s%s", home_path, "/", CMD_DIRECTORY_NAME);
-	asprintf(&cmddb_path, "%s%s%s", cmd_path, "/", CMD_DB_NAME);
+	if (path) {
+		asprintf(&cmd_path, "%s", path);
+
+	} else {
+		char* home_path = getenv("HOME");
+		asprintf(&cmd_path, "%s%s%s", home_path, "/", CMD_DIRECTORY_PATH);
+
+	}
+
+	asprintf(&cmddb_path, "%s%s", cmd_path, "/data");
 	asprintf(&cmdgroups_path, "%s%s", cmd_path, "/groups");
 
 	struct stat st = {0};

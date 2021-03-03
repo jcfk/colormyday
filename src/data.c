@@ -16,6 +16,7 @@ struct charpint_llist* group_color_dict = NULL;
 
 void 
 free_data(
+	void
 ) {	
 	free_display_eventp_llist(current_events);
 	free_charpcharp_llist(member_group_dict, false, false);
@@ -44,7 +45,7 @@ free_data(
  */
 int 
 make_color(
-char* code
+	char* code
 ) {
 	static int no_of_colors = 50;
 
@@ -135,7 +136,8 @@ make_group_color_dict(
  *  time: unix epoch time
  *
  * Out:
- *  the display event which contains the time in question, or if none exists, a null display event
+ *  the display event which contains the time in question, or if 
+ *  none exists, a null display event
  *
  * Finds a display event corresponding to an event containing a given time.
  *
@@ -151,7 +153,10 @@ time_to_event(
 		start_time = temp->display_event.event.start_time;
 		end_time = temp->display_event.event.end_time;
 
-		if ((start_time < time) && ((time <= end_time) || (end_time == -1 && time <= current_time))) {
+		if ((start_time < time) 
+			&& ((time <= end_time) 
+				|| ((end_time == -1)
+					&& (time <= current_time)))) {
 			return temp->display_event;
 
 		}
@@ -215,14 +220,14 @@ begin_event(
 		.end_time = -1,
 		.name = name,
 		.note = malloc_note
-
 	};
 
 	event_to_file(temp);
 
 	make_current_event(temp);
 
-	if (mktime(&earlier_bound_day) <= temp_time && temp_time <= mktime(&later_bound_day)) {
+	if (mktime(&earlier_bound_day) <= temp_time
+		&& temp_time <= mktime(&later_bound_day)) {
 		push_display_eventp_llist(current_event, &current_events);
 
 	}
@@ -287,7 +292,7 @@ end_current_event(
  *
  */
 /* Lists events from youngest (current_event) to oldest */
-struct display_eventp_llist* 
+static struct display_eventp_llist* 
 make_current_events(
 	struct charp_llist* list,
 	struct charpcharp_llist* mg_dict,

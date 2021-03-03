@@ -1,6 +1,6 @@
 #include "colormyday.h"
 
-void 
+static void 
 tick(
 	void
 ) {

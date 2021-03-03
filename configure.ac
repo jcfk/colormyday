@@ -1,7 +1,7 @@
 # initialize
 
 AC_PREREQ(2.59)
-AC_INIT([colormyday], 0.9)
+AC_INIT([colormyday], 0.1)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 AC_PROG_CC

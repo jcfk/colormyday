@@ -38,8 +38,6 @@ struct event {
 struct display_event {
 	char* group;
 	int color;
-	/* int start[2]; */
-	/* int end[2]; */
 	struct event event;
 };
 

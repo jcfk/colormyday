@@ -5,7 +5,7 @@ tick(
 	void
 ) {
 	for(;;) {
-		sleep(1);
+		sleep(5);
 
 		pthread_mutex_lock(&variable_access);
 		pthread_mutex_lock(&display_access);

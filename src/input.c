@@ -35,6 +35,9 @@ begin_handle(
 			return("invalid --late time");
 
 		}
+
+		/* also check for the beginning time of the last event */
+
 	}
 
 	/* If current event exists, end current_event */

@@ -6,6 +6,7 @@ compile
 config.log
 config.status
 configure
+configure~
 depcomp
 install-sh
 Makefile

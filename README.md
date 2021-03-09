@@ -9,7 +9,7 @@ Version 0.9
 
 ### Features
 
-* **vim-like UX:** move through time with `hjkl` and other keys. Begin events with `:begin `.
+* **vim-like UX:** move through time with `hjkl` and other keys. Use command-line mode with `:begin `.
 * **custom colors and groups:** activities can be grouped into groups. Configure your group color palette.
 * **activity notes:** add detail to your activies.
 * **scriptable interaction:** begin and end events from the command line:
@@ -22,7 +22,7 @@ Version 0.9
 
 ### Installation
 
-Right now, colormyday only works in arch. I'll fix it!
+*I believe it'll work on your system. Might need to get a few dependencies. Just do this:*
 
 If installing from this repo, you need the autotools:
 

@@ -96,7 +96,7 @@ exit_colormyday(
 /*
  * Function: resize_colormyday
  *
- * Effectively restarts the app.
+ * Effectively restarts the app in response to a window resize.
  *
  */
 void

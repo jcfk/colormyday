@@ -4,7 +4,11 @@ char* cmd_path = NULL;
 char* cmddb_path = NULL;
 char* cmdgroups_path = NULL;
 
-void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, struct charpcharp_llist** group_hex_dict) {
+void 
+make_member_group_hex_dicts(
+	struct charpcharp_llist** member_group_dict, 
+	struct charpcharp_llist** group_hex_dict
+) {
 	xmlDocPtr doc;
 	xmlNodePtr node;
 
@@ -47,7 +51,11 @@ void make_member_group_hex_dicts(struct charpcharp_llist** member_group_dict, st
 /*
  * EVENT FUNCTIONS
  */
-struct charp_llist* get_events_between(struct tm earlier_bound_tm, struct tm later_bound_tm) {
+struct charp_llist* 
+get_events_between(
+	struct tm earlier_bound_tm, 
+	struct tm later_bound_tm
+) {
 	struct dirent** namelist;
 	struct charp_llist* ret = NULL;
 
@@ -68,7 +76,6 @@ struct charp_llist* get_events_between(struct tm earlier_bound_tm, struct tm lat
 		later_bound = -1;
 
 	}
-
 
 	char* file;
 	char* file_temp;
@@ -203,6 +210,16 @@ char* cursor_event_path() {
 	return ret;
 
 }
+
+/*
+struct event
+last_event_io(
+	void
+) {
+	
+
+}
+*/
 
 /*
  * INITIALIZERS

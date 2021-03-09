@@ -13,7 +13,6 @@ struct charpint_llist* group_color_dict = NULL;
 /*
  * FREE
  */
-
 void 
 free_data(
 	void
@@ -130,6 +129,25 @@ make_group_color_dict(
  */
 
 /*
+ * Function: last_event
+ *
+ * Out:
+ *  The display event corresponding to last recorded event.
+ *
+ * This function gets the parameters of the most recently begun
+ * event, corresponding to the last file in the user's data directory.
+ *
+ */
+/*
+struct display_event
+last_event(
+	void
+) {
+	struct last_event = 
+}
+*/
+
+/*
  * Function: time_to_event
  *
  * In:
@@ -139,7 +157,8 @@ make_group_color_dict(
  *  the display event which contains the time in question, or if 
  *  none exists, a null display event
  *
- * Finds a display event corresponding to an event containing a given time.
+ * Finds a display event corresponding to an event containing a given 
+ * time.
  *
  */
 struct display_event 
@@ -288,17 +307,31 @@ end_current_event(
  * Function: make_current_events
  *
  * In:
- *  list: a list of 
+ *  list: a linked list of paths to event files
+ *  mg_dict: a linked list dict connecting event names to groups
+ * 	gc_dict: a linked list dict connecting groups to colors
+ *
+ * Out:
+ *  A linked list of display events corresponding to the given paths
+ *  and filled with the correct groups and colors as given by the
+ *  dicts.
+ *
+ * This function is to be used on lists of event paths corresponding
+ * to a period of time as given by get_events_between. mg_dict is to
+ * be the global member_group_dict and gc_dict is to be the global
+ * group_color_dict.
+ *
+ * The order given by the input list is preserved.
  *
  */
 /* Lists events from youngest (current_event) to oldest */
-static struct display_eventp_llist* 
+static 
+struct display_eventp_llist* 
 make_current_events(
 	struct charp_llist* list,
 	struct charpcharp_llist* mg_dict,
 	struct charpint_llist* gc_dict
 ) {
-
 	struct charp_llist* temp = list;
 	struct display_eventp_llist* current_events_temp = NULL;
 
@@ -340,7 +373,7 @@ make_current_events(
  * In:
  *  event: an event containing data to be made into the current event
  *
- * This function initializes a new current_event global using given
+ * This function creates a new current_event global using the given
  * data.
  *
  */
@@ -376,11 +409,13 @@ make_current_event(
 /*
  * Function: reload_current_events
  *
- * This function 
+ * This function recreates current_events with the current global
+ * bounds.
  *
  */
 void 
 reload_current_events(
+	void
 ) {
 	free_display_eventp_llist(current_events);
 
@@ -391,12 +426,27 @@ reload_current_events(
 
 }
 
-void scroll_current_events(enum rainbow_scroll direction) {
+/*
+ * Function: scroll_current_events
+ *
+ * In:
+ *  direction: an enum, either R_UP or R_DOWN.
+ *
+ * This function modifies current_events in accordance with a scroll
+ * direction. It gets a day's worth of new events and attaches them
+ * to the appropriate side of current_events, and then removes a day's
+ * worth from the other side.
+ *
+ */
+void 
+scroll_current_events(
+	enum rainbow_scroll direction
+) {
 	struct display_eventp_llist* new_events;
 
 	if (direction == R_UP) {
 		/* add new events */
-		struct charp_llist* temp_1 = get_events_between(earlier_bound_day, tm_add_interval(earlier_bound_day, 0, 0, 1) );
+		struct charp_llist* temp_1 = get_events_between(earlier_bound_day, tm_add_interval(earlier_bound_day, 0, 0, 1));
 		new_events = make_current_events(temp_1, member_group_dict, group_color_dict);
 
 		free_charp_llist(temp_1, true);
@@ -483,7 +533,10 @@ void scroll_current_events(enum rainbow_scroll direction) {
 /*
  * INITALIZER
  */
-void data_init(int rainbow_h) {
+void 
+data_init(
+	int rainbow_h
+) {
 	current_time = time(NULL);
 
 	if (rainbow_h == -1) {

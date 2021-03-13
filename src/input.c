@@ -1,9 +1,5 @@
 #include "colormyday.h"
 
-/*
- * CURSES MODE
- */
-
 /* 
  * Function: begin_handle
  *
@@ -17,13 +13,15 @@
  * if one is given, or else it is the current time.
  *
  */
-static char*
+static 
+void
 begin_handle(
 	char* name, 
 	char* late_time
 ) {
 	if (strcmp(name, "") == 0) {
-		return("no event name given");
+		error("%s", "no event name given");
+		return;
 
 	}
 
@@ -32,12 +30,24 @@ begin_handle(
 		late_time_seconds = string_to_time(late_time);
 
 		if (late_time_seconds == -1) {
-			return("invalid --late time");
+			error("%s","invalid --late time");
+			return;
 
 		}
 
-		/* also check for the beginning time of the last event */
+		int last_event_beginning = last_event().start_time;
 
+		if (late_time_seconds <= last_event_beginning) {
+			error("%s", "cannot set event to have begun before the most recent event");
+			return;
+
+		}
+
+		if (late_time_seconds > current_time) {
+			error("%s", "cannot set event to have begun in the future");
+			return;
+
+		}
 	}
 
 	/* If current event exists, end current_event */
@@ -53,8 +63,6 @@ begin_handle(
 
 	display_tick();
 
-	return(NULL);
-
 }
 
 /*
@@ -63,7 +71,8 @@ begin_handle(
  * This function ends the current event.
  *
  */
-static void
+static 
+void
 end_handle(
 	void
 ) {
@@ -84,7 +93,8 @@ end_handle(
  * are reloaded and rerendered.
  *
  */
-static void 
+static 
+void 
 edit_handle(
 	void
 ) {
@@ -116,11 +126,12 @@ edit_handle(
  * This function parses arguments to a :begin command.
  *
  */
-static char*
+static
+void
 args_begin(
 	char** args
 ) {
-	char* name;
+	char* name = NULL;
 	char* late_time = NULL;
 
 	int i = 1;
@@ -147,14 +158,7 @@ args_begin(
 
 	}
 
-	char* err = begin_handle(name, late_time);
-
-	if (err) {
-		return(err);
-
-	}
-
-	return(NULL);
+	begin_handle(name, late_time);
 
 }
 
@@ -181,9 +185,8 @@ route_args(
 
 	}
 
-	char* err = NULL;
 	if (strcmp(cmd, "begin") == 0) {
-		err = args_begin(args);
+		args_begin(args);
 
 	} else if (strcmp(cmd, "end") == 0) {
 		/* err = */ 
@@ -195,11 +198,6 @@ route_args(
 
 	} else {
 		error("%s", "unknown command");
-
-	}
-
-	if (err) {
-		error("%s", err);
 
 	}
 }

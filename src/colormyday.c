@@ -10,7 +10,8 @@ bool thread_exit;
  * Saves terminal color values for colors 10 and 11.
  *
  */
-static void 
+static 
+void 
 save_default_colors(
 	void
 ) {
@@ -25,7 +26,8 @@ save_default_colors(
  * Initializes curses and new colors and pairs.
  *
  */
-static void 
+static 
+void 
 curses_init(
 	void
 ) {
@@ -85,7 +87,7 @@ exit_colormyday(
 	/* pthread_mutex_unlock(&display_access); */
 	/* pthread_mutex_unlock(&variable_access); */
 
-	reset_color_pairs();
+	/* reset_color_pairs(); */
 
 	endwin();
 

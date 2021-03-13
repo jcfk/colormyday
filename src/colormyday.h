@@ -41,31 +41,31 @@ struct display_event {
 	struct event event;
 };
 
-struct charp_llist {
+struct string_llist {
 	char* content;
-	struct charp_llist* next;
+	struct string_llist* next;
 };
 
-struct charpint_llist {
+struct stringint_llist {
 	char* c_content;
 	int i_content;
-	struct charpint_llist* next;
+	struct stringint_llist* next;
 };
 
-struct charpcharp_llist {
+struct stringstring_llist {
 	char* content_1;
 	char* content_2;
-	struct charpcharp_llist* next;
+	struct stringstring_llist* next;
 };
 
-struct eventp_llist {
+struct event_llist {
 	struct event event;
-	struct eventp_llist* next;
+	struct event_llist* next;
 };
 
-struct display_eventp_llist {
+struct display_event_llist {
 	struct display_event display_event;
-	struct display_eventp_llist* next;
+	struct display_event_llist* next;
 };
 
 enum cursor_movement {
@@ -96,7 +96,7 @@ extern struct tm                    earlier_bound_day;
 
 extern struct tm                    later_bound_day;
 
-extern struct display_eventp_llist* current_events;
+extern struct display_event_llist* current_events;
 
 extern struct display_event         current_event;
 
@@ -134,7 +134,7 @@ void                  args_handle_script(           int argc,
 /* dat                a.c */
 void                  reload_current_events(        void);
 
-struct display_event  time_to_event(                int time);
+/* struct display_event  time_to_event(                int time); */
 
 void                  make_current_event(           struct event event);
 
@@ -142,9 +142,9 @@ void                  data_init(                    int rainbow_h);
 
 int                   make_color(                   char* code);
 
-void                  make_group_color_dict(        struct charpint_llist** list);
+void                  make_group_color_dict(        struct stringint_llist** list);
 
-struct display_event* begin_event(                  char* name, 
+void                  begin_event(                  char* name, 
                                                     int late_time);
 
 struct display_event* end_current_event(            int late_time);
@@ -152,6 +152,8 @@ struct display_event* end_current_event(            int late_time);
 void                  scroll_current_events(        enum rainbow_scroll direction);
 
 void                  free_data(                    void);
+
+struct event          last_event(                   void);
 
 /* display.c */
 void                  debug(                        char* string, ...);
@@ -188,8 +190,8 @@ void                  output(                       char* message);
 /* io.c */
 char*                 cursor_event_path(            void);
 
-void                  make_member_group_hex_dicts(  struct charpcharp_llist** member_group_dict, 
-                                                    struct charpcharp_llist** group_hex_dict);
+void                  make_member_group_hex_dicts(  struct stringstring_llist** member_group_dict, 
+                                                    struct stringstring_llist** group_hex_dict);
 
 void                  make_dicts(                   void);
 
@@ -199,10 +201,12 @@ void                  event_to_file(                struct event event);
 
 struct event          file_to_event(                char* file);
 
-struct charp_llist*   get_events_between(           struct tm earlier_bound_tm, 
+struct string_llist*   get_events_between(           struct tm earlier_bound_tm, 
                                                     struct tm later_bound_tm);
 
 struct charint_llist* get_color_dict(               void);
+
+char*                 last_event_path(              void);
 
 /* utils.c */
 char**                split_args(                   char* string);
@@ -221,59 +225,59 @@ struct tm             tm_add_interval(              struct tm tm,
 
 int                   string_to_time(               char* s);
 
-void                  push_charp_llist(             char* name, 
-                                                    struct charp_llist** list);
+void                  push_string_llist(             char* name, 
+                                                    struct string_llist** list);
 
-void                  push_charpcharp_llist(        char* content_1, 
+void                  push_stringstring_llist(        char* content_1, 
                                                     char* content_2, 
-													struct charpcharp_llist** list);
+													struct stringstring_llist** list);
 
-void                  push_charpint_llist(          char* c_content, 
+void                  push_stringint_llist(          char* c_content, 
                                                     int i_content, 
-													struct charpint_llist** list);
+													struct stringint_llist** list);
 
-void                  push_eventp_llist(            struct event event, 
-                                                    struct eventp_llist** list);
+void                  push_event_llist(            struct event event, 
+                                                    struct event_llist** list);
 
-void                  push_display_eventp_llist(    struct display_event display_event,
-                                                    struct display_eventp_llist** list);
+void                  push_display_event_llist(    struct display_event display_event,
+                                                    struct display_event_llist** list);
 
-void                  free_charp_llist(             struct charp_llist* list, 
+void                  free_string_llist(             struct string_llist* list, 
                                                     bool malloced);
 
-void                  free_charpcharp_llist(        struct charpcharp_llist* list, 
+void                  free_stringstring_llist(        struct stringstring_llist* list, 
                                                     bool malloced_1, 
 													bool malloced_2);
 
-void                  free_charpint_llist(          struct charpint_llist* list, 
+void                  free_stringint_llist(          struct stringint_llist* list, 
                                                     bool malloced);
 
-void                  free_eventp_llkist(           struct eventp_llist* list);
+void                  free_event_llkist(           struct event_llist* list);
 
-void                  free_display_eventp_llist(    struct display_eventp_llist* list);
+void                  free_display_event_llist(    struct display_event_llist* list);
 
-int                   charpint_dict(                struct charpint_llist* list, 
+int                   stringint_dict(                struct stringint_llist* list, 
                                                     char* c);
 
-char*                 charpcharp_dict(              struct charpcharp_llist* list, 
+char*                 stringstring_dict(              struct stringstring_llist* list, 
                                                     char* c);
 
-void                  dump_charp_llist(             struct charp_llist* list);
+void                  dump_string_llist(             struct string_llist* list);
 
-void                  dump_charpcharp_llist(        struct charpcharp_llist* list);
+void                  dump_stringstring_llist(        struct stringstring_llist* list);
 
-void                  dump_charpint_llist(          struct charpint_llist* list);
+void                  dump_stringint_llist(          struct stringint_llist* list);
 
 void                  dump_event(                   struct event event);
 
 void                  dump_display_event(           struct display_event display_event);
 
-void                  dump_eventp_llist(            struct eventp_llist* list);
+void                  dump_event_llist(            struct event_llist* list);
 
 void                  dump_cursor(                  int y, 
                                                     int x);
 
-void                  dump_charpp(                  char** charpp);
+void                  dump_stringp(                  char** stringp);
 
 void                  print_cursor(                 int y, 
                                                     int x);

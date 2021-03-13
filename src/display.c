@@ -142,11 +142,11 @@ new_hour_marks(
 
 		mark = shift+interval_w*i;
 		wattron(rainbow, COLOR_PAIR(color));
-		mvwprintw(rainbow, 1, mark, hour_list[i]);
+		mvwprintw(rainbow, 0, mark, hour_list[i]);
 		
 		i2 = 0;
 		while (i2 < interval_w - 2) {
-			mvwaddch(rainbow, 1, mark+2+i2, ' ');
+			mvwaddch(rainbow, 0, mark+2+i2, ' ');
 			i2 = i2 + 1;
 		}
 
@@ -200,7 +200,7 @@ new_date_marks(
 		}
 
 		wattron(rainbow, COLOR_PAIR(c));
-		mvwprintw(rainbow, 3+i, 0, date);
+		mvwprintw(rainbow, i+2, 0, date);
 		wattroff(rainbow, COLOR_PAIR(c));
 		i = i + 1;
 		temp = tm_add_interval(temp, 0, 0, 1);
@@ -227,7 +227,7 @@ clear_rainbow(
 	int start_x = 0;
 
 	while (start_y*color_w + start_x <= color_w * color_h) {
-		mvwaddch(rainbow, start_y+3, start_x+8, ' ');
+		mvwaddch(rainbow, start_y+2, start_x+8, ' ');
 
 		if (start_x > color_w) {
 			start_y = start_y + 1;
@@ -508,10 +508,10 @@ void disp_event(struct display_event* display_event, bool clear) {
 	if (clear) {
 		while (start_x + color_w*start_y <= end_x + color_w*end_y) {
 			if (start_y == cursor[0] && start_x == cursor[1]) {
-				mvwprintw(rainbow, start_y+3, start_x+8, "C");
+				mvwprintw(rainbow, start_y+2, start_x+8, "C");
 
 			} else {
-				mvwprintw(rainbow, start_y+3, start_x+8, " ");
+				mvwprintw(rainbow, start_y+2, start_x+8, " ");
 
 			}
 			
@@ -546,7 +546,7 @@ void disp_event(struct display_event* display_event, bool clear) {
 		while (start_x + color_w*start_y <= end_x + color_w*end_y) {
 			if (start_y == cursor[0] && start_x == cursor[1]) {
 				wattron(rainbow, A_BOLD);
-				mvwprintw(rainbow, start_y+3, start_x+8, "C");
+				mvwprintw(rainbow, start_y+2, start_x+8, "C");
 
 				if (i >= len) {
 					wattroff(rainbow, A_BOLD);
@@ -556,11 +556,11 @@ void disp_event(struct display_event* display_event, bool clear) {
 				cursor_event = *display_event;
 
 			} else if (start_y == end_y && start_x == end_x) {
-				mvwprintw(rainbow, start_y+3, start_x+8, "\u2591");
+				mvwprintw(rainbow, start_y+2, start_x+8, "\u2591");
 				break;
 
 			} else if (i < len) {
-				mvwaddch(rainbow, start_y+3, start_x+8, *name);
+				mvwaddch(rainbow, start_y+2, start_x+8, *name);
 		
 			} else if (i < len2) {
 				if (printing_name) {
@@ -569,10 +569,10 @@ void disp_event(struct display_event* display_event, bool clear) {
 
 				}
 
-				mvwaddch(rainbow, start_y+3, start_x+8, *name);
+				mvwaddch(rainbow, start_y+2, start_x+8, *name);
 
 			} else {
-				mvwprintw(rainbow, start_y+3, start_x+8, "\u223c");
+				mvwprintw(rainbow, start_y+2, start_x+8, "\u223c");
 
 			}
 
@@ -595,8 +595,11 @@ void disp_event(struct display_event* display_event, bool clear) {
 
 }
 
-void display_events(void) {
-	struct display_eventp_llist* temp = current_events;
+void 
+display_events(
+	void
+) {
+	struct display_event_llist* temp = current_events;
 
 	while (temp) {
 		disp_event(&(temp->display_event), false);
@@ -609,25 +612,47 @@ void display_events(void) {
 /*
  * SCREEN DATA
  */
-static struct display_event first_visible_event(void) {
-	struct display_eventp_llist* temp = current_events;
-	while (temp->next) {
-		temp = temp->next;
+static 
+struct display_event*
+first_visible_event(
+	void
+) {
+	if (current_events) {
+		struct display_event_llist* temp = current_events;
+		while (temp->next) {
+			temp = temp->next;
+
+		}
+
+		return &(temp->display_event);
+
+	} else {
+		return NULL;
 
 	}
-
-	return temp->display_event;
-
 }
 
-static struct display_event last_visible_event(void) {
-	return current_events->display_event;
+static 
+struct display_event*
+last_visible_event(
+	void
+) {
+	if (current_events) {
+		return &(current_events->display_event);
+	
+	} else {
+		return NULL;
 
+	}
 }
 
 /* gets event after cursor event */
-static struct display_event* forward_event(void) {
-	struct display_eventp_llist* temp = current_events;
+static 
+struct display_event* 
+forward_event(
+	void
+) {
+	struct display_event_llist* temp = current_events;
 	struct display_event* ret = NULL;
 	while (temp) {
 		if (temp->display_event.event.start_time == cursor_event.event.start_time) {
@@ -645,7 +670,7 @@ static struct display_event* forward_event(void) {
 
 /* gets event prior to cursor event */
 static struct display_event* backward_event(void) {
-	struct display_eventp_llist* temp = current_events;
+	struct display_event_llist* temp = current_events;
 	while (temp) {
 		if (temp->display_event.event.start_time == cursor_event.event.start_time) {
 			break;
@@ -671,7 +696,7 @@ static struct display_event* backward_event(void) {
 }
 
 static struct display_event cursor_to_event(int cursor_y, int cursor_x) {
-	struct display_eventp_llist* current_events_iter = current_events;
+	struct display_event_llist* current_events_iter = current_events;
 
 	int cursor_dist = cursor_y*color_w + cursor_x;
 
@@ -711,7 +736,11 @@ static struct display_event cursor_to_event(int cursor_y, int cursor_x) {
 /*
  * INPUT
  */
-static void scrolling(enum rainbow_scroll direction) {
+static 
+void 
+scrolling(
+	enum rainbow_scroll direction
+) {
 	if (direction == R_UP) {
 		earlier_bound_day = tm_add_interval(earlier_bound_day, 0, 0, -1);
 		later_bound_day = tm_add_interval(later_bound_day, 0, 0, -1);
@@ -733,6 +762,7 @@ static void scrolling(enum rainbow_scroll direction) {
 	clear_rainbow();
 	display_events();
 	box(rainbow, 0, 0);
+	new_hour_marks();
 	new_date_marks();
 
 }
@@ -852,7 +882,10 @@ void command(void) {
 
 }
 
-void cursor_move(enum cursor_movement movement) {
+void 
+cursor_move(
+	enum cursor_movement movement
+) {
 	int new_y = cursor[0];
 	int new_x = cursor[1];
 
@@ -912,7 +945,15 @@ void cursor_move(enum cursor_movement movement) {
 			break;
 
 		case C_TOP: ;
-			start_time = first_visible_event().event.start_time;
+			struct display_event* first_event = first_visible_event();
+
+			if (first_event) {
+				start_time = first_event->event.start_time;
+
+			} else {
+				start_time = -1;
+
+			}
 
 			if (start_time >= mktime(&earlier_bound_day)) { 
 				new_y = start_y_bound(start_time);
@@ -927,7 +968,15 @@ void cursor_move(enum cursor_movement movement) {
 			break;
 
 		case C_BOTTOM: ;
-			end_time = last_visible_event().event.end_time;
+			struct display_event* last_event = last_visible_event();
+
+			if (last_event) {
+				end_time = last_event->event.end_time;
+
+			} else {
+				end_time = -1;
+
+			}
 
 			if (end_time == -1) {
 				new_y = time_cursor[0];
@@ -1001,13 +1050,13 @@ void cursor_move(enum cursor_movement movement) {
 
 	}
 
-	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
-	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
-	mvwprintw(rainbow, 2, new_x + 8, "\u25bc");
-	mvwprintw(rainbow, new_y + 3, 7, "\u25b6");
+	mvwprintw(rainbow, 1, cursor[1] + 8, " ");
+	mvwprintw(rainbow, cursor[0] + 2, 7, " ");
+	mvwprintw(rainbow, 1, new_x + 8, "\u25bc");
+	mvwprintw(rainbow, new_y + 2, 7, "\u25b6");
 
 	if (cursor_event.event.name == NULL) {
-		mvwaddch(rainbow, cursor[0] + 3 , cursor[1] + 8, ' ');
+		mvwaddch(rainbow, cursor[0]+2 , cursor[1] + 8, ' ');
 
 	} else {
 		cursor[0] = new_y;
@@ -1022,7 +1071,7 @@ void cursor_move(enum cursor_movement movement) {
 	cursor_event = cursor_to_event(cursor[0], cursor[1]);
 
 	if (cursor_event.event.name == NULL) {
-		mvwaddch(rainbow, cursor[0] + 3, cursor[1] + 8, 'C');
+		mvwaddch(rainbow, cursor[0]+2, cursor[1] + 8, 'C');
 
 	} else {
 		disp_event(&cursor_event, false);
@@ -1037,19 +1086,23 @@ void cursor_move(enum cursor_movement movement) {
 /*
  * TICK
  */
-static void cursor_tick(void) {
-	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
-	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
+static 
+void 
+cursor_tick(
+	void
+) {
+	mvwprintw(rainbow, 1, cursor[1]+8, " ");
+	mvwprintw(rainbow, cursor[0]+2, 7, " ");
 
 	cursor[0] = time_cursor[0];
 	cursor[1] = time_cursor[1];
 
-	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
-	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
+	mvwprintw(rainbow, 1, cursor[1]+8, "\u25bc");
+	mvwprintw(rainbow, cursor[0]+2, 7, "\u25b6");
 
 	wrefresh(rainbow);
 
-	disp_event(&cursor_event, false);
+	/* disp_event(&cursor_event, false); */
 	cursor_event = cursor_to_event(cursor[0], cursor[1]);
 	disp_event(&cursor_event, false);
 	/* disp_event(cursor_event, false); */
@@ -1058,7 +1111,10 @@ static void cursor_tick(void) {
 
 }
 
-void display_tick(void) {
+void 
+display_tick(
+	void
+) {
 	time_cursor[0] = end_y_bound(current_time);
 	time_cursor[1] = end_x_bound(current_time);
 
@@ -1074,7 +1130,8 @@ void display_tick(void) {
 	}
 
 	display_duration(current_event);
-	disp_event(&current_event, false);
+	display_events();
+	/* disp_event(&current_event, false); */
 
 }
 
@@ -1105,16 +1162,16 @@ void cursor_init(void) {
 
 	}
 
-	mvwprintw(rainbow, 2, cursor[1] + 8, " ");
-	mvwprintw(rainbow, cursor[0] + 3, 7, " ");
+	mvwprintw(rainbow, 1, cursor[1]+8, " ");
+	mvwprintw(rainbow, cursor[0]+2, 7, " ");
 
 	cursor[0] = time_cursor[0];
 	cursor[1] = time_cursor[1];
 
-	mvwaddch(rainbow, cursor[0] + 3, cursor[1] + 8, 'C');
+	mvwaddch(rainbow, cursor[0]+2, cursor[1]+8, 'C');
 
-	mvwprintw(rainbow, 2, cursor[1] + 8, "\u25bc");
-	mvwprintw(rainbow, cursor[0] + 3, 7, "\u25b6");
+	mvwprintw(rainbow, 1, cursor[1]+8, "\u25bc");
+	mvwprintw(rainbow, cursor[0]+2, 7, "\u25b6");
 
 	wrefresh(rainbow);
 

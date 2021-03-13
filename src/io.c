@@ -6,8 +6,8 @@ char* cmdgroups_path = NULL;
 
 void 
 make_member_group_hex_dicts(
-	struct charpcharp_llist** member_group_dict, 
-	struct charpcharp_llist** group_hex_dict
+	struct stringstring_llist** member_group_dict, 
+	struct stringstring_llist** group_hex_dict
 ) {
 	xmlDocPtr doc;
 	xmlNodePtr node;
@@ -31,12 +31,12 @@ make_member_group_hex_dicts(
 		
 		sub_group = sub_group->next->xmlChildrenNode;
 
-		push_charpcharp_llist(name, hex, group_hex_dict);
+		push_stringstring_llist(name, hex, group_hex_dict);
 
 		while (sub_group) {
 			member = (char*) xmlNodeListGetString(doc, sub_group->xmlChildrenNode, 1);
 
-			push_charpcharp_llist(member, name, member_group_dict);
+			push_stringstring_llist(member, name, member_group_dict);
 			
 			sub_group = sub_group->next;
 		}
@@ -51,13 +51,30 @@ make_member_group_hex_dicts(
 /*
  * EVENT FUNCTIONS
  */
-struct charp_llist* 
+/*
+ * Function: get_events_between
+ *
+ * In:
+ *  earlier_bound_tm: the tm corresponding to the first second of the
+ *  period in question
+ *  later_bound_tm: the tm corresponding to the last second of the
+ *  period in question
+ *
+ * Out:
+ *  A linked list of strings of full paths to event files within the
+ *  given period. This is sorted from most recent to oldest.
+ *
+ * This function collects all event files within a certain period,
+ * meaning all events which occurred even in part within the period.
+ *
+ */
+struct string_llist* 
 get_events_between(
 	struct tm earlier_bound_tm, 
 	struct tm later_bound_tm
 ) {
 	struct dirent** namelist;
-	struct charp_llist* ret = NULL;
+	struct string_llist* ret = NULL;
 
 	int earlier_bound, later_bound;
 
@@ -100,14 +117,14 @@ get_events_between(
 			start_time = strsep(&file_temp, "-");
 			if (earlier_bound < atoi(start_time) && (atoi(start_time) < later_bound || later_bound == -1)) {
 				asprintf(&file, "%s%s%s", cmddb_path, "/", file);
-				push_charp_llist(file, &ret);
+				push_string_llist(file, &ret);
 				found = true;
 
 			} else {
 				if (found) {
 					if (earlier_bound < atoi(strsep(&file_temp, "-"))) {
 						asprintf(&file, "%s/%s", cmddb_path, file);
-						push_charp_llist(file, &ret);
+						push_string_llist(file, &ret);
 
 					}
 
@@ -128,7 +145,20 @@ get_events_between(
 
 }
 
-void event_to_file(struct event event) {
+/*
+ * Function: event_to_file
+ *
+ * In:
+ *  event: an event struct to be written to an event file
+ *
+ * This function writes to the event file corresponding to an event.
+ * If one does not exist, it is created.
+ *
+ */
+void 
+event_to_file(
+	struct event event
+) {
 	xmlDocPtr doc = xmlNewDoc(BAD_CAST "1.0");
 	xmlNodePtr root = xmlNewNode(NULL, BAD_CAST "event");
 
@@ -150,7 +180,22 @@ void event_to_file(struct event event) {
 
 }
 
-struct event file_to_event(char* file) {
+/*
+ * Function: file_to_event
+ *
+ * In:
+ *  file: a full path to an event file
+ *
+ * Out:
+ *  An event struct corresponding to the file.
+ *
+ * This function turns an event file into an event struct.
+ * 
+ */
+struct event 
+file_to_event(
+	char* file
+) {
 	struct event e;
 	
 	xmlDocPtr doc;
@@ -162,7 +207,7 @@ struct event file_to_event(char* file) {
 	char* file_dup;
 	asprintf(&file_dup, "%s", file);
 
-	char* file_name;
+	char* file_name = NULL;
 	char* file_name_temp = strtok(file_dup, "/");
 	while (file_name_temp != NULL) {
 		file_name = file_name_temp;
@@ -196,7 +241,10 @@ struct event file_to_event(char* file) {
 
 }
 
-char* cursor_event_path() {
+char* 
+cursor_event_path(
+	void
+) {
 	char* ret = NULL;
 	
 	if (cursor_event.event.end_time == -1) {
@@ -212,19 +260,47 @@ char* cursor_event_path() {
 }
 
 /*
-struct event
-last_event_io(
+ * Function: last_event_path
+ *
+ * Out:
+ *  The full path to the last recorded event file.
+ *
+ * This function gets the path to the last (most recent) event file.
+ *
+ */
+char*
+last_event_path(
 	void
 ) {
+	struct dirent** namelist;
+	char* ret;
+
+	char* file;
+	int d = scandir(cmddb_path, &namelist, NULL, alphasort);
+	d--;
 	
+	file = namelist[d]->d_name;
+
+	while (d--) {
+		free(namelist[d]);
+
+	}
+
+	free(namelist);
+
+	asprintf(&ret, "%s/%s", cmddb_path, file);
+
+	return ret;
 
 }
-*/
 
 /*
  * INITIALIZERS
  */
-void io_init(char* path) {
+void 
+io_init(
+	char* path
+) {
 	/* check/create db directory in home */	
 	if (path) {
 		asprintf(&cmd_path, "%s", path);
@@ -252,6 +328,7 @@ void io_init(char* path) {
 	if (access(cmdgroups_path, F_OK) == -1) {
 		FILE* f;
 		f = fopen(cmdgroups_path, "w");
+		fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<groups>\n\t<group>\n\t\t<title>DEFAULT</title>\n\t\t<color>007FFF</color>\n\t\t<members>\n\t\t\t<event>DEFAULT</event>\n\t\t</members>\n\t</group>\n</groups>", f);
 		fclose(f);
 
 	}

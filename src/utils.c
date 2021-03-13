@@ -62,9 +62,24 @@ char** split_args(char* string) {
  * DICTIONARY TOOLS
  */
 
-char* charpcharp_dict(struct charpcharp_llist* list, char* c) {
+/*
+ * Function: stringstring_dict
+ *
+ * In:
+ *  list: the linked list "dictionary"
+ *  c: the key string to be found.
+ *
+ * Out:
+ *  The value string corresponding to the key.
+ *
+ */
+char* 
+stringstring_dict(
+	struct stringstring_llist* list, 
+	char* c
+) {
 	char* ret = NULL;
-	struct charpcharp_llist* temp = list;	
+	struct stringstring_llist* temp = list;	
 
 	while(temp) {
 		if (strcmp(temp->content_1, c) == 0) {
@@ -77,9 +92,24 @@ char* charpcharp_dict(struct charpcharp_llist* list, char* c) {
 	return ret;
 }
 
-int charpint_dict(struct charpint_llist* list, char* c) {
+/*
+ * Function: stringint_dict
+ *
+ * In:
+ *  list: the linked list "dictionary"
+ *  c: the key string to be found.
+ *
+ * Out:
+ *  The value int corresponding to the key.
+ *
+ */
+int 
+stringint_dict(
+	struct stringint_llist* list, 
+	char* c
+) {
 	int ret = 0;
-	struct charpint_llist* temp = list;
+	struct stringint_llist* temp = list;
 
 	while (temp) {
 		if (strcmp(temp->c_content, c) == 0) {
@@ -96,9 +126,9 @@ int charpint_dict(struct charpint_llist* list, char* c) {
  * LINKED LIST TOOLS PUSH
  */
 
-void push_charpcharp_llist(char* c_1, char* c_2, struct charpcharp_llist** list) {
-	struct charpcharp_llist* ret;
-	ret = malloc(sizeof(struct charpcharp_llist));
+void push_stringstring_llist(char* c_1, char* c_2, struct stringstring_llist** list) {
+	struct stringstring_llist* ret;
+	ret = malloc(sizeof(struct stringstring_llist));
 	ret->content_1 = c_1;
 	ret->content_2 = c_2;
 	ret->next = *list;
@@ -106,9 +136,26 @@ void push_charpcharp_llist(char* c_1, char* c_2, struct charpcharp_llist** list)
 	*list = ret;
 }
 
-void push_charpint_llist(char* c_content, int i_content, struct charpint_llist** list) {
-	struct charpint_llist* ret;
-	ret = malloc(sizeof(struct charpint_llist));
+/*
+ * Function: push_stringint_llist
+ *
+ * In:
+ *  c_content: a string (char(acter)p(ointer))
+ *  i_content: an integer (int(eger))
+ *  list: a pointer to a pointer to a string, int struct linked list
+ *
+ * This function prepends a stringint llist containing the given data
+ * to the given stringint llist.
+ *
+ */
+void 
+push_stringint_llist(
+	char* c_content, 
+	int i_content, 
+	struct stringint_llist** list
+) {
+	struct stringint_llist* ret;
+	ret = malloc(sizeof(struct stringint_llist));
 	ret->c_content = c_content;
 	ret->i_content = i_content;
 	ret->next = *list;
@@ -116,31 +163,44 @@ void push_charpint_llist(char* c_content, int i_content, struct charpint_llist**
 	*list = ret;
 }
 
-void push_charp_llist(char* name, struct charp_llist** list) {
-	struct charp_llist* ret;
-	ret = malloc(sizeof(struct charp_llist));
+void push_string_llist(char* name, struct string_llist** list) {
+	struct string_llist* ret;
+	ret = malloc(sizeof(struct string_llist));
 	ret->content = name;
 	ret->next = *list;
 
 	*list = ret;
 }
 
-void push_eventp_llist(struct event event, struct eventp_llist** list) {
-	struct eventp_llist* ret;
-	ret = malloc(sizeof(struct eventp_llist));
+void push_event_llist(struct event event, struct event_llist** list) {
+	struct event_llist* ret;
+	ret = malloc(sizeof(struct event_llist));
 	ret->event = event;
 	ret->next = *list;
 	
 	*list = ret;
 }
 
+/*
+ * Function: push_display_event_llist
+ *
+ * In:
+ *  display_event: a display event
+ *  list: a pointer to a pointer to a linked list of event pointers
+ *
+ * This function prepends a display event llist containing the given
+ * display event to the given display event llist.
+ *
+ * Display_event_llists made like this will need to be freed.
+ *
+ */
 void 
-push_display_eventp_llist(
+push_display_event_llist(
 	struct display_event display_event, 
-	struct display_eventp_llist** list
+	struct display_event_llist** list
 ) {
-	struct display_eventp_llist* ret;
-	ret = malloc(sizeof(struct display_eventp_llist));
+	struct display_event_llist* ret;
+	ret = malloc(sizeof(struct display_event_llist));
 	ret->display_event = display_event;
 	ret->next = *list;
 
@@ -153,13 +213,13 @@ push_display_eventp_llist(
  */
 
 void 
-free_charpcharp_llist(
-	struct charpcharp_llist* list,
+free_stringstring_llist(
+	struct stringstring_llist* list,
 	bool malloced_1,
 	bool malloced_2
 ) {
-	struct charpcharp_llist* temp = list;
-	struct charpcharp_llist* tempp;
+	struct stringstring_llist* temp = list;
+	struct stringstring_llist* tempp;
 
 	while (temp) {
 		if (malloced_1) {
@@ -181,12 +241,12 @@ free_charpcharp_llist(
 }
 
 void 
-free_charpint_llist(
-	struct charpint_llist* list,
+free_stringint_llist(
+	struct stringint_llist* list,
 	bool malloced
 ) {
-	struct charpint_llist* temp = list;
-	struct charpint_llist* tempp;
+	struct stringint_llist* temp = list;
+	struct stringint_llist* tempp;
 
 	while (temp) {
 		if (malloced) {
@@ -203,9 +263,9 @@ free_charpint_llist(
 }
 
 /* char*s in this llist are either all malloc'ed or not */
-void free_charp_llist(struct charp_llist* list, bool malloced) {
-	struct charp_llist* temp = list;
-	struct charp_llist* tempp;
+void free_string_llist(struct string_llist* list, bool malloced) {
+	struct string_llist* temp = list;
+	struct string_llist* tempp;
 	
 	while (temp) {
 		if (malloced) {
@@ -221,17 +281,17 @@ void free_charp_llist(struct charp_llist* list, bool malloced) {
 	}
 }
 
-/* void free_eventp_llist(struct eventp_llist* list) { */
+/* void free_event_llist(struct event_llist* list) { */
 
 
 /* } */
 
 void 
-free_display_eventp_llist(
-	struct display_eventp_llist* list
+free_display_event_llist(
+	struct display_event_llist* list
 ) {
-	struct display_eventp_llist* temp = list;
-	struct display_eventp_llist* tempp;
+	struct display_event_llist* temp = list;
+	struct display_event_llist* tempp;
 
 	while (temp) {
 		tempp = temp;
@@ -247,16 +307,16 @@ free_display_eventp_llist(
 /*
  * LINKED LIST TOOLS DUMP
  */
-void dump_charpcharp_llist(struct charpcharp_llist* list) {
-	struct charpcharp_llist* temp = list;
+void dump_stringstring_llist(struct stringstring_llist* list) {
+	struct stringstring_llist* temp = list;
 
 	while(temp) {
 		temp = temp->next;
 	}
 }
 
-void dump_charpint_llist(struct charpint_llist* list) {
-	struct charpint_llist* temp = list;
+void dump_stringint_llist(struct stringint_llist* list) {
+	struct stringint_llist* temp = list;
 
 	while(temp) {
 		printf("C: %s, I: %d\n", temp->c_content, temp->i_content);
@@ -264,8 +324,8 @@ void dump_charpint_llist(struct charpint_llist* list) {
 	}
 }
 
-void dump_charp_llist(struct charp_llist* list) {
-	struct charp_llist* temp = list;
+void dump_string_llist(struct string_llist* list) {
+	struct string_llist* temp = list;
 	while (temp) {
 		printf("%s\n", temp->content);
 		temp = temp->next;
@@ -289,8 +349,8 @@ void dump_display_event(struct display_event display_event) {
 	printf("EVENT: %s, %s, %d-%d, %d\n", name, group, start_time, end_time, color);
 }
 
-void dump_eventp_llist(struct eventp_llist* list) {
-	struct eventp_llist* temp = list;
+void dump_event_llist(struct event_llist* list) {
+	struct event_llist* temp = list;
 	while (temp) {
 		dump_event(temp->event);
 		temp = temp->next;
@@ -309,10 +369,10 @@ void print_cursor(int y, int x) {
 	wrefresh(rainbow);
 }
 
-void dump_charpp(char** charpp) {
+void dump_stringp(char** stringp) {
 	int i = 0;
-	while (charpp[i]) {
-		printf("%s\n", charpp[i]);
+	while (stringp[i]) {
+		printf("%s\n", stringp[i]);
 		i += 1;
 
 	}
@@ -332,7 +392,29 @@ void dump_charpp(char** charpp) {
 
 /* } */
 
-struct tm tm_add_interval(struct tm tm, int years, int months, int days) {
+/*
+ * Function: tm_add_interval
+ *
+ * In:
+ *  tm: the base tm
+ *  years: the number of years to be added
+ *  months: the number of months to be added
+ *  days: the number of days to be added
+ *
+ * Out:
+ *  The resulting, normalized tm.
+ *
+ * This function adds (moves forward in time by) certain quantities of
+ * years, months, and days to a tm struct. It then normalizes it.
+ *
+ */
+struct tm 
+tm_add_interval(
+	struct tm tm, 
+	int years, 
+	int months, 
+	int days
+) {
 	struct tm temp = tm;
 
 	temp.tm_year = temp.tm_year + years;

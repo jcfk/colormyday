@@ -1,14 +1,26 @@
 #include "colormyday.h"
 
+/* the current time in epoch seconds */
 int current_time;
+
+/* a tm corresponding to the first second of the first of the visible
+ * days */
 struct tm earlier_bound_day;
+
+/* a tm corresponding to the last second of the last of the visible
+ * days */
 struct tm later_bound_day;
-struct display_eventp_llist* current_events;
+
+/* a linked list of pointers to display events corresponding to all
+ * currently visible events */
+struct display_event_llist* current_events;
+
+/* a display event */
 struct display_event current_event;
 
-struct charpcharp_llist* member_group_dict = NULL;
-struct charpcharp_llist* group_hex_dict = NULL;
-struct charpint_llist* group_color_dict = NULL;
+struct stringstring_llist* member_group_dict = NULL;
+struct stringstring_llist* group_hex_dict = NULL;
+struct stringint_llist* group_color_dict = NULL;
 
 /*
  * FREE
@@ -17,10 +29,10 @@ void
 free_data(
 	void
 ) {	
-	free_display_eventp_llist(current_events);
-	free_charpcharp_llist(member_group_dict, false, false);
-	free_charpcharp_llist(group_hex_dict, false, false);
-	free_charpint_llist(group_color_dict, false);
+	free_display_event_llist(current_events);
+	free_stringstring_llist(member_group_dict, false, false);
+	free_stringstring_llist(group_hex_dict, false, false);
+	free_stringint_llist(group_color_dict, false);
 
 }
 
@@ -38,8 +50,8 @@ free_data(
  *  Integer representing a new color pair.
  *
  * Turns a hex color string into a curses color pair with a background
- * of the color in question. Foreground is dark if bg is light, and
- * vice versa.
+ * of the color in question. Foreground is dark if the color is light, 
+ * and vice versa.
  *
  */
 int 
@@ -108,13 +120,13 @@ make_color(
  */
 void 
 make_group_color_dict(
-	struct charpint_llist** list
+	struct stringint_llist** list
 ) {
-	struct charpcharp_llist* temp = group_hex_dict;
+	struct stringstring_llist* temp = group_hex_dict;
 	*list = NULL;
 
 	while (temp) {
-		push_charpint_llist(
+		push_stringint_llist(
 			temp->content_1,
 			make_color(temp->content_2),
 			list
@@ -132,50 +144,50 @@ make_group_color_dict(
  * Function: last_event
  *
  * Out:
- *  The display event corresponding to last recorded event.
+ *  The event struct corresponding to last recorded event.
  *
  * This function gets the parameters of the most recently begun
- * event, corresponding to the last file in the user's data directory.
+ * event.
  *
  */
-/*
-struct display_event
+struct event
 last_event(
 	void
 ) {
-	struct last_event = 
+	return file_to_event(last_event_path());
+
 }
-*/
 
 /*
  * Function: time_to_event
  *
  * In:
- *  time: unix epoch time
+ *  time: unix epoch time in seconds
  *
  * Out:
- *  the display event which contains the time in question, or if 
- *  none exists, a null display event
+ *  the visible display event which contains the time in question, or
+ *  if none exists, a null display event
  *
  * Finds a display event corresponding to an event containing a given 
  * time.
  *
  */
+/*
 struct display_event 
 time_to_event(
 	int time
 ) {
-	struct display_eventp_llist* temp = current_events;
+	struct display_event_llist* temp = current_events;
 
 	int start_time, end_time;
 	while (temp) {
 		start_time = temp->display_event.event.start_time;
 		end_time = temp->display_event.event.end_time;
 
-		if ((start_time < time) 
-			&& ((time <= end_time) 
-				|| ((end_time == -1)
-					&& (time <= current_time)))) {
+		if ((start_time < time) && 
+		    ((time <= end_time) || 
+			 ((end_time == -1) && 
+			  (time <= current_time)))) {
 			return temp->display_event;
 
 		}
@@ -196,29 +208,27 @@ time_to_event(
 	return ret;
 
 }
+*/
 
 /*
  * Function: begin_event
  *
  * In:
  *  name: a string containing the name of the new event
- *  late_time: a timestamp containing the time at which the new
- *  event should be retroactively begun, or 0
+ *  late_time: the epoch timestamp containing the time at which the 
+ *  new event should be retroactively begun, or 0 (if it should not
+ *  be retroactively begun)
  *
- * Out:
- *  a pointer to the last visible display event, which will be the
- *  current event if it is visible.
+ * This function creates a new event using the given data, prints it
+ * to a file, and then sets current_event to it.
  *
- * This function creates a new event using the given data and sets
- * current_event to it. 
- *
- * If it should be visible, it is appended to display_events.
- * disp_event is called on the last visible event (which will be the
- * current event if it is visible) in order to intialize its display
- * position parameters.
+ * If the event should be visible, it is appended to display_events.
+ * disp_event is then called on the last visible event (which will be
+ * the current event if it is visible) in order to intialize its 
+ * display position parameters.
  *
  */
-struct display_event*
+void
 begin_event(
 	char* name, 
 	int late_time
@@ -232,7 +242,7 @@ begin_event(
 
 	}
 
-	char* malloc_note = malloc(sizeof(char) * 3);
+	char* malloc_note = malloc(sizeof(char)*3);
 	strcpy(malloc_note, "-1");
 	struct event temp = (struct event) {
 		.start_time = temp_time,
@@ -247,12 +257,9 @@ begin_event(
 
 	if (mktime(&earlier_bound_day) <= temp_time
 		&& temp_time <= mktime(&later_bound_day)) {
-		push_display_eventp_llist(current_event, &current_events);
+		push_display_event_llist(current_event, &current_events);
 
 	}
-
-	return &(current_events->display_event);
-
 }
 
 /*
@@ -326,14 +333,14 @@ end_current_event(
  */
 /* Lists events from youngest (current_event) to oldest */
 static 
-struct display_eventp_llist* 
+struct display_event_llist* 
 make_current_events(
-	struct charp_llist* list,
-	struct charpcharp_llist* mg_dict,
-	struct charpint_llist* gc_dict
+	struct string_llist* list,
+	struct stringstring_llist* mg_dict,
+	struct stringint_llist* gc_dict
 ) {
-	struct charp_llist* temp = list;
-	struct display_eventp_llist* current_events_temp = NULL;
+	struct string_llist* temp = list;
+	struct display_event_llist* current_events_temp = NULL;
 
 	struct event temp_event;
 	struct display_event temp_display_event;
@@ -344,9 +351,9 @@ make_current_events(
 
 		int c = 1;
 		char* group = NULL;
-		group = charpcharp_dict(mg_dict, temp_event.name);
+		group = stringstring_dict(mg_dict, temp_event.name);
 		if (group) {
-			c = charpint_dict(gc_dict, group);
+			c = stringint_dict(gc_dict, group);
 
 		}
 
@@ -358,7 +365,7 @@ make_current_events(
 
 		}
 		
-		push_display_eventp_llist(temp_display_event, &current_events_temp);
+		push_display_event_llist(temp_display_event, &current_events_temp);
 		temp = temp->next;
 
 	}
@@ -384,9 +391,9 @@ make_current_event(
 	int c = 1;
 
 	char* group;
-	group = charpcharp_dict(member_group_dict, event.name);
+	group = stringstring_dict(member_group_dict, event.name);
 	if (group) {
-		c = charpint_dict(group_color_dict, group);
+		c = stringint_dict(group_color_dict, group);
 
 	}
 
@@ -417,12 +424,12 @@ void
 reload_current_events(
 	void
 ) {
-	free_display_eventp_llist(current_events);
+	free_display_event_llist(current_events);
 
-	struct charp_llist* events = get_events_between(earlier_bound_day, later_bound_day);
+	struct string_llist* events = get_events_between(earlier_bound_day, later_bound_day);
 	current_events = make_current_events(events, member_group_dict, group_color_dict);
 
-	free_charp_llist(events, true);
+	free_string_llist(events, true);
 
 }
 
@@ -437,22 +444,29 @@ reload_current_events(
  * to the appropriate side of current_events, and then removes a day's
  * worth from the other side.
  *
+ * To-do:
+ *  1. Make this simply get all events of the new slice. Probably 
+ *  will be more efficient.
+ *
  */
 void 
 scroll_current_events(
 	enum rainbow_scroll direction
 ) {
-	struct display_eventp_llist* new_events;
+	struct display_event_llist* new_events;
 
 	if (direction == R_UP) {
 		/* add new events */
-		struct charp_llist* temp_1 = get_events_between(earlier_bound_day, tm_add_interval(earlier_bound_day, 0, 0, 1));
+		struct string_llist* temp_1 = get_events_between(
+			earlier_bound_day, 
+			tm_add_interval(earlier_bound_day, 0, 0, 1)
+		);
 		new_events = make_current_events(temp_1, member_group_dict, group_color_dict);
 
-		free_charp_llist(temp_1, true);
+		free_string_llist(temp_1, true);
 
 		if (new_events != NULL) { 
-			struct display_eventp_llist* temp;
+			struct display_event_llist* temp;
 			struct tm temp_tm = tm_add_interval(earlier_bound_day, 0, 0, -1);
 			if (new_events->display_event.event.end_time >= mktime(&temp_tm)) {
 				temp = new_events;
@@ -464,7 +478,7 @@ scroll_current_events(
 
 			}
 
-			struct display_eventp_llist* temp_3 = current_events;
+			struct display_event_llist* temp_3 = current_events;
 			while (temp_3->next) {
 				temp_3 = temp_3->next;
 
@@ -475,7 +489,7 @@ scroll_current_events(
 		}
 
 		/* remove old events */
-		struct display_eventp_llist* temp_2;
+		struct display_event_llist* temp_2;
 		while (current_events->display_event.event.start_time >= mktime(&later_bound_day)) {
 			temp_2 = current_events;
 			current_events = current_events->next;
@@ -486,14 +500,14 @@ scroll_current_events(
 		}
 	} else {
 		/* add new events */
-		struct charp_llist* temp_1 = get_events_between(tm_add_interval(later_bound_day, 0, 0, -1), later_bound_day);
+		struct string_llist* temp_1 = get_events_between(tm_add_interval(later_bound_day, 0, 0, -1), later_bound_day);
 		new_events = make_current_events(temp_1, member_group_dict, group_color_dict);
 
-		free_charp_llist(temp_1, true);
+		free_string_llist(temp_1, true);
 
 		if (new_events != NULL) {
-			struct display_eventp_llist* temp_2 = new_events;
-			struct display_eventp_llist* temp_3 = temp_2;
+			struct display_event_llist* temp_2 = new_events;
+			struct display_event_llist* temp_3 = temp_2;
 
 			while (temp_2->next) {
 				temp_3 = temp_2;
@@ -518,20 +532,43 @@ scroll_current_events(
 		}
 
 		/* remove old events */
-		struct display_eventp_llist* temp_4 = current_events;
-		while (((temp_4->display_event.event.end_time >= mktime(&earlier_bound_day)) || (temp_4->display_event.event.end_time == -1)) && (temp_4->next != NULL)) {
+		struct display_event_llist* temp_4 = current_events;
+		while ((temp_4->next != NULL) &&
+			   ((temp_4->display_event.event.end_time >= mktime(&earlier_bound_day)) || 
+			    (temp_4->display_event.event.end_time == -1))
+		) {
 			temp_4 = temp_4->next;
 
 		}
 
-		free_display_eventp_llist(temp_4->next);
+		free_display_event_llist(temp_4->next);
 		temp_4->next = NULL;
 
 	}
+
+	/* struct display_event_llist* new_events = make_current_events( */
+	/* 	get_events_between(earlier_bound_day, later_bound_day), */ 
+	/* 	member_group_dict, */ 
+	/* 	group_color_dict */
+	/* ); */
+
+	/* free_display_event_llist(current_events); */
+
+	/* current_events = new_events; */
+
 }
 
 /*
  * INITALIZER
+ */
+/*
+ * Function: data_init
+ *
+ * In:
+ *  rainbow_h: the height of the rainbow
+ *
+ * This function initializes all 
+ *
  */
 void 
 data_init(
@@ -547,7 +584,7 @@ data_init(
 
 	} else {
 		/* Initialize rainbow to display to today from (rainbow_h - 3)/2 days ago */
-		int earlier_bound_relative_days = (rainbow_h - 3) - 4;
+		int earlier_bound_relative_days = (rainbow_h - 1) - 4;
 		int later_bound_relative_days = 0;
 
 		time_t temp = current_time;

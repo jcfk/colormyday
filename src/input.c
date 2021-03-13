@@ -101,7 +101,7 @@ edit_handle(
 	endwin();
 
 	char* command = NULL;
-	asprintf(&command, "vi %s", cursor_event_path());
+	asprintf(&command, "nano %s", cursor_event_path());
 	int err = system(command);
 
 	if (err == -1) {

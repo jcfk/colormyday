@@ -259,6 +259,14 @@ cursor_event_path(
 
 }
 
+int
+filter_out_hidden(
+	const struct dirent* entry
+) {
+	return (entry->d_name)[0] != '.';
+
+}
+
 /*
  * Function: last_event_path
  *
@@ -273,22 +281,28 @@ last_event_path(
 	void
 ) {
 	struct dirent** namelist;
-	char* ret;
+	char* ret = NULL;
 
-	char* file;
-	int d = scandir(cmddb_path, &namelist, NULL, alphasort);
-	d--;
-	
-	file = namelist[d]->d_name;
+	int i = 0;
+	char* file = NULL;
+	int d = scandir(cmddb_path, &namelist, filter_out_hidden, alphasort);
 
 	while (d--) {
+		if (i == 0) {
+			file = namelist[d]->d_name;
+		}
 		free(namelist[d]);
+
+		i += 1;
 
 	}
 
 	free(namelist);
 
-	asprintf(&ret, "%s/%s", cmddb_path, file);
+	if (file != NULL) {
+		asprintf(&ret, "%s/%s", cmddb_path, file);
+
+	}
 
 	return ret;
 

@@ -154,7 +154,23 @@ struct event
 last_event(
 	void
 ) {
-	return file_to_event(last_event_path());
+	char* path = last_event_path();
+
+	if (path != NULL) {
+		return file_to_event(path);
+
+	}
+
+	/* why don't we just make a null event global? */
+	struct event event = (struct event) {
+		.start_time = -1,
+		.end_time = -1,
+		.name = NULL,
+		.note = NULL
+
+	};
+
+	return event;
 
 }
 

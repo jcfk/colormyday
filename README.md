@@ -1,4 +1,4 @@
-![title](colormyday.png)
+![preview](2021-3-13.png)
 
 Version 0.9
 
@@ -37,11 +37,6 @@ If installing from this repo, you need the autotools:
 
 
 #### Script mode
-
-
-### Gallery
-
-SOON
 
 
 ### To-do

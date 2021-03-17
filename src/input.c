@@ -78,9 +78,6 @@ end_handle(
 ) {
 	end_current_event(-1);
 
-	reload_current_events();
-	display_events();
-
 	display_tick();
 
 }

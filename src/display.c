@@ -110,7 +110,8 @@ error(
  * Prints 24 hour-marks from 00 to 23 to the top of the screen.
  *
  */
-static void 
+static 
+void 
 new_hour_marks(
 	void
 ) {
@@ -176,7 +177,8 @@ new_hour_marks(
  * and earlier_bound_day as the reference.
  *
  */
-static void 
+static 
+void 
 new_date_marks(
 	void
 ) {
@@ -219,7 +221,8 @@ new_date_marks(
  * Clears all events from the screen.
  *
  */
-static void 
+static 
+void 
 clear_rainbow(
 	void
 ) {
@@ -336,6 +339,7 @@ display_note(
  * certain event has been in progress.
  *
  */
+static
 void 
 display_duration(
 	struct display_event display_event
@@ -384,7 +388,8 @@ display_duration(
  * The rule is: if the
  *
  */
-static int 
+static 
+int 
 start_y_bound(
 	int time
 ) {
@@ -408,7 +413,8 @@ start_y_bound(
  * displayed event.
  *
  */
-static int 
+static 
+int 
 end_y_bound(
 	int time
 ) {
@@ -422,7 +428,11 @@ end_y_bound(
 
 }
 
-static int start_x_bound(int time) {
+static 
+int 
+start_x_bound(
+	int time
+) {
 	time_t temp = time;
 	struct tm* temp_tm = localtime(&temp);
 
@@ -433,7 +443,11 @@ static int start_x_bound(int time) {
 
 }
 
-static int end_x_bound(int time) {
+static 
+int 
+end_x_bound(
+	int time
+) {
 	time_t temp = time;
 	struct tm* temp_tm = localtime(&temp);
 
@@ -443,7 +457,8 @@ static int end_x_bound(int time) {
 
 }
 
-static void 
+static 
+void 
 set_bounds(
 	int start_time, 
 	int end_time, 
@@ -479,7 +494,12 @@ set_bounds(
 	}
 }
 
-void disp_event(struct display_event* display_event, bool clear) {
+static
+void 
+disp_event(
+	struct display_event* display_event, 
+	bool clear
+) {
 	/* Get display position */
 	int start_x, start_y, end_x, end_y;
 
@@ -669,7 +689,11 @@ forward_event(
 }
 
 /* gets event prior to cursor event */
-static struct display_event* backward_event(void) {
+static 
+struct display_event* 
+backward_event(
+	void
+) {
 	struct display_event_llist* temp = current_events;
 	while (temp) {
 		if (temp->display_event.event.start_time == cursor_event.event.start_time) {
@@ -695,7 +719,12 @@ static struct display_event* backward_event(void) {
 	}
 }
 
-static struct display_event cursor_to_event(int cursor_y, int cursor_x) {
+static 
+struct display_event 
+cursor_to_event(
+	int cursor_y, 
+	int cursor_x
+) {
 	struct display_event_llist* current_events_iter = current_events;
 
 	int cursor_dist = cursor_y*color_w + cursor_x;
@@ -767,7 +796,11 @@ scrolling(
 
 }
 
-char* get_command(void) {
+static
+char* 
+get_command(
+	void
+) {
 	char* disp = ":\u2588";
 
 	werase(controls);
@@ -861,7 +894,10 @@ char* get_command(void) {
 
 }
 
-void command(void) {
+void 
+command(
+	void
+) {
 	char* request = get_command();
 
 	if (request == NULL) {
@@ -1137,19 +1173,30 @@ display_tick(
 /*
  * INITIALIZERS
  */
-static void top_data_init(void) {
+static 
+void 
+top_data_init(
+	void
+) {
 	mvwprintw(top_data, 1, 1, "COLORMYDAY");
 	wrefresh(top_data);
 
 }
 
-static void scaffolding_init(void) {
+static 
+void 
+scaffolding_init(
+	void
+) {
 	new_hour_marks();
 	new_date_marks();
 
 }
 
-void cursor_init(void) {
+void 
+cursor_init(
+	void
+) {
 	cursor_ticking = true;
 
 	time_cursor[0] = end_y_bound(current_time);

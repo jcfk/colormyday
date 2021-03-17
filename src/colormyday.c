@@ -131,11 +131,13 @@ main(
 
 	/* argument handling: turn this into its own function which 
 	 * takes pointers to optargs */
-	char* directory = NULL;
+	char* data_path = NULL;
+	char* config_path = NULL;
 	int flag;
 	while (true) {
 		static struct option long_options[] = {
-			{"directory", required_argument, 0, 1},
+			{"datadir", required_argument, 0, 1},
+			{"confdir", required_argument, 0, 2},
 			{0, 0, 0, 0}
 
 		};
@@ -151,14 +153,18 @@ main(
 
 		switch (flag) {
 			case 1:
-				directory = optarg;
+				data_path = optarg;
+				break;
+			
+			case 2:
+				config_path = optarg;
 				break;
 
 		}
 	}
 
 	/* input/output */
-	io_init(directory);
+	io_init(data_path, config_path);
 
 	/* configure window */
 	curses_init();

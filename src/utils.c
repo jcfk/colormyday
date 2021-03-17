@@ -3,7 +3,10 @@
 /*
  * STRING TOOLS
  */
-char** split_args(char* string) {
+char** 
+split_args(
+	char* string
+) {
 	int len = 0;
 	char** ret = malloc(sizeof(char*));
 
@@ -78,18 +81,28 @@ stringstring_dict(
 	struct stringstring_llist* list, 
 	char* c
 ) {
+	if (c == NULL) {
+		return NULL;
+
+	}
+
 	char* ret = NULL;
+	
 	struct stringstring_llist* temp = list;	
 
-	while(temp) {
+	while (temp) {
 		if (strcmp(temp->content_1, c) == 0) {
 			ret = temp->content_2;
 			break;
+
 		}
+
 		temp = temp->next;
+
 	}
 
 	return ret;
+
 }
 
 /*
@@ -108,6 +121,11 @@ stringint_dict(
 	struct stringint_llist* list, 
 	char* c
 ) {
+	if (c == NULL) {
+		return NULL;
+
+	}
+
 	int ret = 0;
 	struct stringint_llist* temp = list;
 
@@ -126,7 +144,12 @@ stringint_dict(
  * LINKED LIST TOOLS PUSH
  */
 
-void push_stringstring_llist(char* c_1, char* c_2, struct stringstring_llist** list) {
+void 
+push_stringstring_llist(
+	char* c_1, 
+	char* c_2, 
+	struct stringstring_llist** list
+) {
 	struct stringstring_llist* ret;
 	ret = malloc(sizeof(struct stringstring_llist));
 	ret->content_1 = c_1;

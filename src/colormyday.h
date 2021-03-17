@@ -24,8 +24,6 @@
 #include <libxml2/libxml/tree.h>
 #include <ncurses.h>
 
-#define CMD_DIRECTORY_PATH ".colormyday"
-
 #define CMD_VERSION "COLORMYDAY v" VERSION
 
 /* structs */
@@ -136,10 +134,6 @@ void                  reload_current_events(        void);
 
 void                  data_init(                    int rainbow_h);
 
-int                   make_color(                   char* code);
-
-void                  make_group_color_dict(        struct stringint_llist** list);
-
 void                  begin_event(                  char* name, 
                                                     int late_time);
 
@@ -162,14 +156,7 @@ void                  cursor_move(                  enum cursor_movement movemen
 
 void                  display_tick(                 void);
 
-char*                 get_command(                  void);
-
 void                  command(                      void);
-
-void                  display_duration(             struct display_event display_event);
-
-void                  disp_event(                   struct display_event* display_event, 
-                                                    bool clear);
 
 void                  display_end_event(            struct display_event display_event);
 
@@ -191,7 +178,8 @@ void                  make_member_group_hex_dicts(  struct stringstring_llist** 
 
 void                  make_dicts(                   void);
 
-void                  io_init(                      char* path);
+void                  io_init(                      char* data_path,
+                                                    char* config_path);
 
 void                  event_to_file(                struct event event);
 

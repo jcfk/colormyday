@@ -60,6 +60,7 @@ free_data(
  * and vice versa.
  *
  */
+static
 int 
 make_color(
 	char* code
@@ -124,6 +125,7 @@ make_color(
  * corresponding curses color pairs.
  *
  */
+static
 void 
 make_group_color_dict(
 	struct stringint_llist** list
@@ -183,11 +185,6 @@ last_event(
  * This function creates a new event using the given data, prints it
  * to a file, and then sets current_event to it.
  *
- * If the event should be visible, it is appended to display_events.
- * disp_event is then called on the last visible event (which will be
- * the current event if it is visible) in order to intialize its 
- * display position parameters.
- *
  */
 void
 begin_event(
@@ -226,10 +223,6 @@ begin_event(
  *  the current event should be retroactively ended, or 0
  *
  * This function ends current_event at the given time. 
- *
- * If the current event is visible, the last visible event is 
- * modified as well. disp_event is called on the last visible event
- * in order to modify its display position parameters.
  *
  */
 void

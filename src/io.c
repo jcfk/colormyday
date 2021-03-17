@@ -1,7 +1,7 @@
 #include "colormyday.h"
 
-char* cmd_path = NULL;
-char* cmddb_path = NULL;
+char* cmddata_path = NULL;
+char* cmdconfig_path = NULL;
 char* cmdgroups_path = NULL;
 
 void 
@@ -100,7 +100,7 @@ get_events_between(
 	char* start_time;
 	bool found = false;
 	bool done = false;
-	int d = scandir(cmddb_path, &namelist, NULL, alphasort);
+	int d = scandir(cmddata_path, &namelist, NULL, alphasort);
 	while (d--) {
 		file = namelist[d]->d_name;
 		file_temp = strdup(file);
@@ -116,14 +116,14 @@ get_events_between(
 
 			start_time = strsep(&file_temp, "-");
 			if (earlier_bound < atoi(start_time) && (atoi(start_time) < later_bound || later_bound == -1)) {
-				asprintf(&file, "%s%s%s", cmddb_path, "/", file);
+				asprintf(&file, "%s%s%s", cmddata_path, "/", file);
 				push_string_llist(file, &ret);
 				found = true;
 
 			} else {
 				if (found) {
 					if (earlier_bound < atoi(strsep(&file_temp, "-"))) {
-						asprintf(&file, "%s/%s", cmddb_path, file);
+						asprintf(&file, "%s/%s", cmddata_path, file);
 						push_string_llist(file, &ret);
 
 					}
@@ -168,10 +168,10 @@ event_to_file(
 	xmlNewChild(root, NULL, BAD_CAST "note", BAD_CAST event.note);
 
 	char* new_file;
-	asprintf(&new_file, "%s/%d", cmddb_path, event.start_time);
+	asprintf(&new_file, "%s/%d", cmddata_path, event.start_time);
 	if (event.end_time != -1) {
 		remove(new_file);
-		asprintf(&new_file, "%s/%d-%d", cmddb_path, event.start_time, event.end_time);
+		asprintf(&new_file, "%s/%d-%d", cmddata_path, event.start_time, event.end_time);
 
 	}
 
@@ -248,10 +248,10 @@ cursor_event_path(
 	char* ret = NULL;
 	
 	if (cursor_event.event.end_time == -1) {
-		asprintf(&ret, "%s/%d", cmddb_path, cursor_event.event.start_time);
+		asprintf(&ret, "%s/%d", cmddata_path, cursor_event.event.start_time);
 
 	} else {
-		asprintf(&ret, "%s/%d-%d", cmddb_path, cursor_event.event.start_time, cursor_event.event.end_time);
+		asprintf(&ret, "%s/%d-%d", cmddata_path, cursor_event.event.start_time, cursor_event.event.end_time);
 
 	}
 
@@ -285,7 +285,7 @@ last_event_path(
 
 	int i = 0;
 	char* file = NULL;
-	int d = scandir(cmddb_path, &namelist, filter_out_hidden, alphasort);
+	int d = scandir(cmddata_path, &namelist, filter_out_hidden, alphasort);
 
 	while (d--) {
 		if (i == 0) {
@@ -300,7 +300,7 @@ last_event_path(
 	free(namelist);
 
 	if (file != NULL) {
-		asprintf(&ret, "%s/%s", cmddb_path, file);
+		asprintf(&ret, "%s/%s", cmddata_path, file);
 
 	}
 
@@ -313,29 +313,38 @@ last_event_path(
  */
 void 
 io_init(
-	char* path
+	char* data_path,
+	char* config_path
 ) {
 	/* check/create db directory in home */	
-	if (path) {
-		asprintf(&cmd_path, "%s", path);
+	if (data_path) {
+		asprintf(&cmddata_path, "%s", data_path);
 
 	} else {
-		char* home_path = getenv("HOME");
-		asprintf(&cmd_path, "%s%s%s", home_path, "/", CMD_DIRECTORY_PATH);
+		char* xdg_path = getenv("XDG_DATA_HOME");
+		asprintf(&cmddata_path, "%s%s", xdg_path, "/colormyday");
 
 	}
 
-	asprintf(&cmddb_path, "%s%s", cmd_path, "/data");
-	asprintf(&cmdgroups_path, "%s%s", cmd_path, "/groups");
+	if (config_path) {
+		asprintf(&cmdconfig_path, "%s", config_path);
+
+	} else {
+		char* xdg_path = getenv("XDG_CONFIG_HOME");
+		asprintf(&cmdconfig_path, "%s%s", xdg_path, "/colormyday");
+
+	}
+
+	asprintf(&cmdgroups_path, "%s%s", cmdconfig_path, "/groups");
 
 	struct stat st = {0};
-	if (stat(cmd_path, &st) == -1) {
-		mkdir(cmd_path, 0700);
+	if (stat(cmddata_path, &st) == -1) {
+		mkdir(cmddata_path, 0700);
 
 	}
-	
-	if (stat(cmddb_path, &st) == -1) {
-		mkdir(cmddb_path, 0700);
+
+	if (stat(cmdconfig_path, &st) == -1) {
+		mkdir(cmdconfig_path, 0700);
 
 	}
 

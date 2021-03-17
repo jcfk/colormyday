@@ -259,6 +259,7 @@ cursor_event_path(
 
 }
 
+static
 int
 filter_out_hidden(
 	const struct dirent* entry
@@ -316,32 +317,47 @@ io_init(
 	char* data_path,
 	char* config_path
 ) {
-	/* check/create db directory in home */	
 	if (data_path) {
 		asprintf(&cmddata_path, "%s", data_path);
 
-	} else {
+	} else if (strcmp(getenv("XDG_DATA_HOME"), "") != 0) {
 		char* xdg_path = getenv("XDG_DATA_HOME");
 		asprintf(&cmddata_path, "%s%s", xdg_path, "/colormyday");
 
-	}
-
-	if (config_path) {
-		asprintf(&cmdconfig_path, "%s", config_path);
-
 	} else {
-		char* xdg_path = getenv("XDG_CONFIG_HOME");
-		asprintf(&cmdconfig_path, "%s%s", xdg_path, "/colormyday");
+		char* home_path = getenv("HOME");
+		char* cmd_path = NULL;
 
+		asprintf(&cmd_path, "%s%s", home_path, "/.colormyday");
+		asprintf(&cmddata_path, "%s%s", home_path, "/.colormyday/data");
+
+		struct stat st = {0};
+		if (stat(cmd_path, &st) == -1) {
+			mkdir(cmd_path, 0700);
+
+		}
 	}
-
-	asprintf(&cmdgroups_path, "%s%s", cmdconfig_path, "/groups");
 
 	struct stat st = {0};
 	if (stat(cmddata_path, &st) == -1) {
 		mkdir(cmddata_path, 0700);
 
 	}
+
+	if (config_path) {
+		asprintf(&cmdconfig_path, "%s", config_path);
+
+	} else if (strcmp(getenv("XDG_CONFIG_HOME"), "") != 0) {
+		char* xdg_path = getenv("XDG_CONFIG_HOME");
+		asprintf(&cmdconfig_path, "%s%s", xdg_path, "/colormyday");
+
+	} else {
+		char* home_path = getenv("HOME");
+		asprintf(&cmdconfig_path, "%s%s", home_path, "/.colormyday");
+
+	}
+
+	asprintf(&cmdgroups_path, "%s%s", cmdconfig_path, "/groups");
 
 	if (stat(cmdconfig_path, &st) == -1) {
 		mkdir(cmdconfig_path, 0700);

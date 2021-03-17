@@ -1,0 +1,83 @@
+----------------------------
+- Colormyday documentation -
+----------------------------
+
+0. Intro
+
+Colormyday is a visual time tracker based on a horizontal calendar
+(ie horizontal hours and vertical days). It has a main, graphical 
+"curses mode", but it can also be used via script.
+
+It records time within the framework of events and categories of
+events. An event consists in a named behavior which can be begun and 
+ended at arbitrary times, one at a time (eg "Breakfast"). Events can
+be groups into categories, which can be assigned names and colors. in
+curses mode, events are drawn out in color, hence "colormyday".
+
+1. Local files
+
+All data and configuration are read out of a directory (here called 
+$D) which defaults to ~/.colormyday but can be set with a 
+command-line option.
+
+It's expected to look like this:
+
+- $D/
+|- data/
+ |- 1615928460-1615935000
+ |- ...
+|- groups
+|- config
+
+If this structure does not exist at $D, it will be created.
+
+1.1. Event data
+
+Colormyday reads event data out of a directory $D/data.
+
+Event data consists in event files. An event file corresponds to a 
+single event and is named $START-$END (ex. 1615928460-1615935000). It
+contains a single line of xml in this form:
+
+<event><title>Lunch</title><note>-1</note></event>
+
+1.2. Group data
+
+Colormyday reads groups, their colors, and corresponding events out 
+of a file $D/groups. It contains xml in the form:
+
+<groups>
+  <group>
+    <title>Sleep</title>
+    <color>170024</color>
+    <members>
+      <event>Sleep</event>
+      ...
+    </members>
+  </group>
+  ...
+</groups>
+
+1.3 Config data
+
+TODO
+
+2. I/O
+
+TODO
+
+3. Data
+
+TODO
+
+4. Input
+
+TODO
+
+5. Time
+
+TODO
+
+
+
+

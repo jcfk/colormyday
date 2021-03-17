@@ -134,10 +134,6 @@ void                  args_handle_script(           int argc,
 /* dat                a.c */
 void                  reload_current_events(        void);
 
-/* struct display_event  time_to_event(                int time); */
-
-void                  make_current_event(           struct event event);
-
 void                  data_init(                    int rainbow_h);
 
 int                   make_color(                   char* code);
@@ -147,7 +143,7 @@ void                  make_group_color_dict(        struct stringint_llist** lis
 void                  begin_event(                  char* name, 
                                                     int late_time);
 
-struct display_event* end_current_event(            int late_time);
+void                  end_current_event(            int late_time);
 
 void                  scroll_current_events(        enum rainbow_scroll direction);
 

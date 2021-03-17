@@ -1,7 +1,7 @@
 # initialize
 
 AC_PREREQ(2.59)
-AC_INIT([colormyday], 0.9)
+AC_INIT([colormyday], 0.9.0)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 AC_PROG_CC
@@ -9,7 +9,6 @@ AC_PROG_CC
 AC_CONFIG_SRCDIR([src/colormyday.c])
 #AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile src/Makefile])
-
 
 # program check
 

@@ -52,7 +52,7 @@ begin_handle(
 
 	/* If current event exists, end current_event */
 	if (current_event.event.name != NULL) {
-		disp_event(&current_event, true);
+		/* disp_event(&current_event, true); */
 		end_current_event(late_time_seconds);
 
 	}
@@ -76,7 +76,7 @@ void
 end_handle(
 	void
 ) {
-	end_current_event(0);
+	end_current_event(-1);
 
 	reload_current_events();
 	display_events();

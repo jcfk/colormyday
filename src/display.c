@@ -755,9 +755,9 @@ scrolling(
 
 	}
 
-	/* debug("%d", mktime(&earlier_bound_day)); */
+	/* scroll_current_events(direction); */
 
-	scroll_current_events(direction);
+	reload_current_events();
 
 	clear_rainbow();
 	display_events();
@@ -1131,7 +1131,6 @@ display_tick(
 
 	display_duration(current_event);
 	display_events();
-	/* disp_event(&current_event, false); */
 
 }
 

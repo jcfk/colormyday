@@ -21,3 +21,6 @@ src/Makefile.in
 src/vgcore*
 src/valgrind_out.txt*
 
+docs/Makefile
+docs/Makefile.in
+

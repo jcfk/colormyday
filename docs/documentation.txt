@@ -2,7 +2,7 @@
 - Colormyday documentation -
 ----------------------------
 
-0. Intro
+0. Intro (old)
 
 Colormyday is a visual time tracker based on a horizontal calendar
 (ie horizontal hours and vertical days). It has a main, graphical 

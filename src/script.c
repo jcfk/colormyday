@@ -1,65 +1,119 @@
 #include "colormyday.h"
 
-/*
- * SCRIPT MODE
- */
-/* void */ 
-/* end_begin_script( */
-/* 	char* name */
+/****************************************************************************
+* DEINITIALIZER *************************************************************
+*****************************************************************************/
+static
+void
+free_script(
+	void
+) {
+	free(cmddata_path);
+	free(cmdconfig_path);
+	free(cmdgroups_path);
+}
+
+void
+exit_from_script(
+	int status
+) {
+	free_script();
+	exit(status);
+}
+
+/*********************************************************************
+ * ACTIONS ***********************************************************
+ *********************************************************************/
+/* static */
+/* void */
+/* main_show( */
+/* 	int show_count */
 /* ) { */
-/* 	if (current_event.event.name != NULL) { */
-/* 		struct display_event last = *end_current_event(0); */
-/* 		begin_event(name, 0); */
-/* 		printf("Begun event: %s (ended %s)\n", name, last.event.name); */
-
-/* 	} else { */
-/* 		begin_event(name, 0); */
-/* 		printf("Begun event: %s\n", name); */
-
-/* 	} */
-
+/* 	struct eventp_llist* last_events = last_few_events(show_count); */
+	
 /* } */
 
-/* void */ 
-/* end_event_script( */
-/* 	void */
-/* ) { */
-/* 	if (current_event.event.name != NULL) { */
-/* 		struct display_event last = *end_current_event(0); */
-/* 		char* t = event_duration(last.event.start_time, last.event.end_time); */
-/* 		printf("Ended event: %s (duration %s)\n", last.event.name, t); */
-		
-/* 	} else { */
-/* 		printf("No current event to end.\n"); */
+static
+void
+main_end(
+	char* late_time,
+	struct error** err
+) {
+	/* Parse late time */
+	int late_time_seconds = time(NULL);
+	if (late_time) {
+		late_time_seconds = string_to_time(late_time, err);
+		if ERRP return;
+		validate_late_time(late_time_seconds, time(NULL), err);
+		if ERRP return;
+	}
 
-/* 	} */
-/* } */
+	/* End current event */
+	struct event* last = last_event(err);
+	if ERRP return;
+	if (last->end_time != TILL_NOW) {
+		init_error(err, ALREADY_ENDED_EVENT, FATAL, 
+			"Last event \"%s\" already ended.", last->name);
+		return;
+	}
+	end_current_event_core(late_time_seconds, err);
+	if ERRP return;
+	printf("Ending \"%s\" with end_time: %s\n", last->name, late_time);
+}
 
-/* void */ 
-/* args_handle_script( */
-/* 	int argc, */ 
-/* 	char* argv[] */
-/* ) { */
-/* 	char* arg; */
-/* 	int i = 1; */
-/* 	while(i < argc) { */
-/* 		arg = argv[i]; */
+static
+void
+main_begin(
+	char* name,
+	char* late_time,
+	struct error** err
+) {
+	/* Parse late time */
+	int late_time_seconds = time(NULL);
+	if (late_time) {
+		late_time_seconds = string_to_time(late_time, err);
+		if ERRP return;
+		validate_late_time(late_time_seconds, time(NULL), err);
+		if ERRP return;
+	}
 
-/* 		i += 1; */
-/* 		if (strcmp(arg, "begin") == 0) { */
-/* 			if (i == argc) { */
-/* 				printf("ERR: Please enter the name of the event you'd like to begin. For example:\n\n\t$ colormyday begin Exercise\n\t$ colormyday begin \"Side Project\"\n\n"); */
+	/* End current event */
+	struct event* last = last_event(err);
+	if ERRP return;
+	if (last->end_time == TILL_NOW) {
+		end_current_event_core(late_time_seconds, err);
+		if ERRP return;
+	}
 
-/* 			} else { */
-/* 				end_begin_script(argv[i]); */
+	/* Begin new event */
+	begin_event_core(name, late_time_seconds, err);
+	if ERRP return;
+	printf("Starting \"%s\" with begin_time: %s\n", name, late_time);
+}
 
-/* 			} */
-
-/* 		} else if (strcmp(arg, "end") == 0) { */
-/* 			end_event_script(); */
-
-/* 		} */
-/* 	} */
-/* } */
-
+/*********************************************************************
+ * INITIALIZER *******************************************************
+ *********************************************************************/
+void
+main_script(
+	struct options* opts,
+	struct error** err
+) {
+	switch (opts->action) {
+		case BEGIN:
+			main_begin(opts->begin_name, opts->late_time, err);
+			break;
+		case END:
+			main_end(opts->late_time, err);
+			break;
+		/* case SHOW: */
+		/* 	main_show(opts->show_count); */
+		/* 	break; */
+		default:
+			break;
+	}
+	free_options(opts);
+	if ERRP return;
+	exit_from_script(EXIT_SUCCESS);
+}
 

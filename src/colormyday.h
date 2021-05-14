@@ -20,23 +20,68 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <libxml2/libxml/parser.h>
+#include <libxml2/libxml/parser.h> // libxml2/libxml??
 #include <libxml2/libxml/tree.h>
-#include <ncurses.h>
 
 #define CMD_VERSION "COLORMYDAY v" VERSION
+#define GENERATE_ERRPOR_STATUSES(FUNC) \
+	FUNC(GENERIC_ERRPOR) \
+	FUNC(UNKNOWN_COMMAND) \
+	FUNC(MISSING_EVENT_NAME) \
+	FUNC(BAD_TIMESTAMP) \
+	FUNC(TOO_EARLY_TIMESTAMP) \
+	FUNC(FUTURE_TIMESTAMP) \
+	FUNC(ALREADY_ENDED_EVENT) \
+	FUNC(EMPTY_DATADIR) \
+	FUNC(CANNOT_OPEN_FILE) \
+	FUNC(BAD_SHOW_COUNT) \
+	FUNC(UNKNOWN_OPTION) \
+	FUNC(UNKNOWN_ACTION) \
+	FUNC(MISSING_ARGUMENT) \
+	FUNC(NO_TERMINAL_COLORS) \
+	FUNC(TOO_SMALL_TERMINAL) \
+	FUNC(BAD_HEX_COLOR_CODE) \
+	FUNC(NO_EVENT_SELECTED) \
+	FUNC(BAD_XML)
+#define STRINGIZE(X) #X,
+#define ENUMIZE(X) X,
+#define ERRP (*err)
+#define STREQ(a, b) (strcmp(a, b) == 0)
+#define STRNEQ(a, b) (strcmp(a, b) != 0)
+#define TILL_NOW -1
 
-/* structs */
+/********************************************************************
+* ENUMS *************************************************************
+*********************************************************************/
+enum action {
+	BEGIN,
+	END,
+	SHOW,
+	CURSES
+};
+
+enum error_status {
+	GENERATE_ERRPOR_STATUSES(ENUMIZE)
+};
+
+enum fatal_status {
+	NONFATAL,
+	FATAL
+};
+
+/**********************************************************************
+* STRUCTS *************************************************************
+***********************************************************************/
 struct event {
 	int start_time, end_time;
 	char* name;
 	char* note;
 };
 
-struct display_event {
+struct dsp_event {
 	char* group;
 	int color;
-	struct event event;
+	struct event* event;
 };
 
 struct string_llist {
@@ -56,215 +101,135 @@ struct stringstring_llist {
 	struct stringstring_llist* next;
 };
 
-struct event_llist {
-	struct event event;
-	struct event_llist* next;
+struct eventp_llist {
+	struct event* event;
+	struct eventp_llist* next;
 };
 
-struct display_event_llist {
-	struct display_event display_event;
-	struct display_event_llist* next;
+struct dsp_eventp_llist {
+	struct dsp_event* dsp_event;
+	struct dsp_eventp_llist* next;
 };
 
-enum cursor_movement {
-	C_LEFT,
-	C_DOWN,
-	C_UP,
-	C_RIGHT,
-	C_TOP,
-	C_BOTTOM,
-	C_ZERO,
-	C_DOLLAR,
-	C_W,
-	C_B
+struct options {
+	enum action action;
+	char* data_path;
+	char* config_path;
+	char* late_time;
+	char* begin_name;
+	int show_count;
 };
 
-enum rainbow_scroll {
-	R_UP,
-	R_DOWN
+struct error {
+	enum error_status status;
+	bool fatal;
+	char* message;
 };
 
-/* globals */
-extern pthread_mutex_t              display_access, 
-                                    variable_access;
+/**********************************************************************
+* GLOBALS *************************************************************
+***********************************************************************/
+extern char* error_status_strings[];
+extern char* cmddata_path;
+extern char* cmdconfig_path;
+extern char* cmdgroups_path;
 
-extern int                          current_time;
+/************************************************************************
+* FUNCTIONS *************************************************************
+*************************************************************************/
+void            fill_options(            struct options* opts,
+                                         int argc,
+                                         char* argv[],
+                                         struct error** err);
 
-extern struct tm                    earlier_bound_day;
+void            free_options(            struct options* opts);
 
-extern struct tm                    later_bound_day;
+void            main_gui(                struct error** err);
 
-extern struct display_event_llist* current_events;
+void            io_init(                 char* data_path,
+                                         char* config_path,
+                                         struct error** err);
 
-extern struct display_event         current_event;
+int             string_to_time(          char* s,
+                                         struct error** err);
 
-extern struct display_event         cursor_event;
+void            push_string_llist(       char* name,
+                                         struct string_llist** list);
 
-extern bool                         cursor_ticking;
+void            push_stringstring_llist( char* content_1,
+                                         char* content_2,
+                                         struct stringstring_llist** list);
 
-extern bool                         thread_exit;
+void            event_to_file(           struct event* event,
+                                         struct error** err);
 
-extern WINDOW*                      top_data;
+struct event*   file_to_event(           char* file);
 
-extern WINDOW*                      rainbow;
+char*           last_event_path(         struct error** err);
 
-extern WINDOW*                      bottom_data;
+struct event*   last_event(              struct error** err);
 
-extern WINDOW*                      controls;
+void            free_string_llist(       struct string_llist* list,
+                                         bool malloced);
 
-/* colormyday.c */
-void                  exit_colormyday(              void);
+void            free_stringstring_llist( struct stringstring_llist* list,
+                                         bool malloced_1,
+                                         bool malloced_2);
 
-void                  resize_colormyday(            void);
+void            begin_event_core(        char* name,
+                                         int late_time,
+                                         struct error** err);
 
-/* tic                k.c */
-void*                 tick_init(                    void* arg);
+void            init_error(              struct error** ptr,
+                                         enum error_status status,
+                                         enum fatal_status fatal,
+                                         char* msg_fmt,
+                                         ...);
 
-/* inp                ut.c */
-void                  input_handle(                 int key);
+struct options* malloc_options(          void);
 
-void                  route_args(                   char** args);
+void            end_current_event_core(  int late_time,
+                                         struct error** err);
 
-/* scr                ipt.c */
-void                  args_handle_script(           int argc, 
-                                                    char* argv[]);
+void            begin_event_core(        char* name,
+                                         int late_time,
+                                         struct error** err);
 
-/* dat                a.c */
-void                  reload_current_events(        void);
+struct event*   malloc_event(            void);
 
-void                  data_init(                    int rainbow_h);
+void            main_script(             struct options* opts,
+                                         struct error** err);
 
-void                  begin_event(                  char* name, 
-                                                    int late_time);
+void            dump_opts(               struct options* opts);
 
-void                  end_current_event(            int late_time);
+void            catch_err_script(        struct error* err);
 
-void                  scroll_current_events(        enum rainbow_scroll direction);
+void            exit_from_script(        int status);
 
-void                  free_data(                    void);
+void            add_error_msg(           struct error** ptr,
+                                         char* msg_fmt,
+                                         ...);
 
-struct event          last_event(                   void);
+char*           error_status_to_string(  enum error_status status);
 
-/* display.c */
-void                  debug(                        char* string, ...);
+void            free_error(              struct error* err);
 
-void                  error(                        char* string, ...);
+void            free_options(            struct options* opts);
 
-void                  display_events(               void);
+char*           stringstring_dict(       struct stringstring_llist* list,
+                                         char* c);
 
-void                  cursor_move(                  enum cursor_movement movement);
+void            catch_err_gui(        struct error* err);
 
-void                  display_tick(                 void);
+void            exit_from_gui(        int status);
 
-void                  command(                      void);
+bool            regex_match(             char* regex,
+                                         char* str);
 
-void                  display_end_event(            struct display_event display_event);
-
-void                  cursor_init(                  void);
-
-int                   windows_init(                 void);
-
-void                  display_init(                 void);
-
-void                  display_note(                 struct display_event display_event);
-
-void                  output(                       char* message);
-
-/* io.c */
-char*                 cursor_event_path(            void);
-
-void                  make_member_group_hex_dicts(  struct stringstring_llist** member_group_dict, 
-                                                    struct stringstring_llist** group_hex_dict);
-
-void                  make_dicts(                   void);
-
-void                  io_init(                      char* data_path,
-                                                    char* config_path);
-
-void                  event_to_file(                struct event event);
-
-struct event          file_to_event(                char* file);
-
-struct string_llist*   get_events_between(           struct tm earlier_bound_tm, 
-                                                    struct tm later_bound_tm);
-
-struct charint_llist* get_color_dict(               void);
-
-char*                 last_event_path(              void);
-
-/* utils.c */
-char**                split_args(                   char* string);
-
-struct tm             end_of_day(                   struct tm tm);
-
-struct tm             start_of_day(                 struct tm tm);
-
-char*                 event_duration(               int start_time, 
-                                                    int end_time);
-
-struct tm             tm_add_interval(              struct tm tm, 
-                                                    int years, 
-													int months, 
-													int days);
-
-int                   string_to_time(               char* s);
-
-void                  push_string_llist(             char* name, 
-                                                    struct string_llist** list);
-
-void                  push_stringstring_llist(        char* content_1, 
-                                                    char* content_2, 
-													struct stringstring_llist** list);
-
-void                  push_stringint_llist(          char* c_content, 
-                                                    int i_content, 
-													struct stringint_llist** list);
-
-void                  push_event_llist(            struct event event, 
-                                                    struct event_llist** list);
-
-void                  push_display_event_llist(    struct display_event display_event,
-                                                    struct display_event_llist** list);
-
-void                  free_string_llist(             struct string_llist* list, 
-                                                    bool malloced);
-
-void                  free_stringstring_llist(        struct stringstring_llist* list, 
-                                                    bool malloced_1, 
-													bool malloced_2);
-
-void                  free_stringint_llist(          struct stringint_llist* list, 
-                                                    bool malloced);
-
-void                  free_event_llkist(           struct event_llist* list);
-
-void                  free_display_event_llist(    struct display_event_llist* list);
-
-int                   stringint_dict(                struct stringint_llist* list, 
-                                                    char* c);
-
-char*                 stringstring_dict(              struct stringstring_llist* list, 
-                                                    char* c);
-
-void                  dump_string_llist(             struct string_llist* list);
-
-void                  dump_stringstring_llist(        struct stringstring_llist* list);
-
-void                  dump_stringint_llist(          struct stringint_llist* list);
-
-void                  dump_event(                   struct event event);
-
-void                  dump_display_event(           struct display_event display_event);
-
-void                  dump_event_llist(            struct event_llist* list);
-
-void                  dump_cursor(                  int y, 
-                                                    int x);
-
-void                  dump_stringp(                  char** stringp);
-
-void                  print_cursor(                 int y, 
-                                                    int x);
-
+void            clear_error(             struct error** err);
+
+void            validate_late_time(      int late_time,
+                                         int current_time,
+                                         struct error** err);
 
 
